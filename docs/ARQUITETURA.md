@@ -43,7 +43,8 @@ Modelo: banco compartilhado, esquema compartilhado, coluna `barbershop_id` em to
 | Conceito | Onde fica |
 |---|---|
 | SUPER_ADMIN | `profiles.is_super_admin boolean`. Só alterável por SQL direto; trigger bloqueia qualquer UPDATE vindo de usuário comum. Nunca por cadastro público. |
-| OWNER / BARBER / CUSTOMER | `memberships (user_id, barbershop_id, role, status)`, único por usuário+barbearia+papel |
+| OWNER / BARBER | `memberships (user_id, barbershop_id, role, status)`, único por usuário+barbearia+papel |
+| CUSTOMER | não usa membership: o vínculo com cada barbearia é a linha em `customers` |
 | Dados globais do cliente | `profiles` (nome, e-mail, telefone) |
 | Cliente dentro de uma barbearia | `customers (barbershop_id, profile_id, ...)`, criado no primeiro agendamento |
 
