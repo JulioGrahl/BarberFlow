@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* Identidade BarberFlow: grafite e preto com acento dourado discreto (docs/DESIGN.md) */
+:root {
+  color-scheme: dark;
+  --bf-bg: #0b0b0d;
+  --bf-surface: #141417;
+  --bf-surface-2: #1b1b1f;
+  --bf-border: #26262b;
+  --bf-text: #ededed;
+  --bf-muted: #9a9aa2;
+  --bf-accent: #d4a63a;
+  --bf-accent-ink: #1a1405;
+  --bf-success: #3dbe7a;
+  --bf-warn: #e0953a;
+  --bf-danger: #e05555;
+}
+
+@theme inline {
+  --color-bg: var(--bf-bg);
+  --color-surface: var(--bf-surface);
+  --color-surface-2: var(--bf-surface-2);
+  --color-line: var(--bf-border);
+  --color-ink: var(--bf-text);
+  --color-muted: var(--bf-muted);
+  --color-accent: var(--bf-accent);
+  --color-accent-ink: var(--bf-accent-ink);
+  --color-success: var(--bf-success);
+  --color-warn: var(--bf-warn);
+  --color-danger: var(--bf-danger);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: var(--bf-bg);
+  color: var(--bf-text);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--bf-accent);
+  outline-offset: 2px;
+}
