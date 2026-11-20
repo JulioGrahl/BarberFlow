@@ -16,7 +16,9 @@ Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Lucide, Supabase (Po
 | 1. Arquitetura | feita |
 | 2. Banco, RLS e RPCs | feita e testada (46 verificações no Supabase) |
 | 3. Autenticação e rotas por papel | código pronto; build, lint e proteção de rotas verificados; **login/cadastro reais ainda não testados contra o Supabase** |
-| 4 em diante | pendentes (ver seção 15 da especificação) |
+| 3. Autenticação — teste real | cadastro e promoção a Super Admin confirmados pelo usuário |
+| 6–7. Painel Master | código pronto (dashboard, barbearias, Nova Barbearia com link de convite, planos, mensalidades manuais, suporte auditado); build/lint OK e RPCs testadas no banco; **telas ainda não conferidas no navegador** |
+| 8 em diante | pendentes (ver seção 15 da especificação) |
 
 ## Rodando localmente
 Requisitos: Node 20+ e npm.
@@ -53,7 +55,7 @@ No painel do Supabase › Authentication:
 | `/convite/[token]` | pública: aceitar convite de barbeiro ou proprietário |
 | `/app` | cliente logado |
 | `/painel/[slug]` | dono ou barbeiro daquela barbearia |
-| `/master` | somente Super Admin |
+| `/master`, `/master/barbearias`, `/master/barbearias/nova`, `/master/barbearias/[slug]`, `/master/planos` | somente Super Admin |
 
 A checagem no proxy (`src/proxy.ts`) é só otimista. A autorização real está em `src/lib/auth.ts` (nas páginas) e na RLS do banco.
 
