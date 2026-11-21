@@ -3,7 +3,7 @@ import { inviteBarber, revokeInvite, saveProfessional } from "@/app/actions/shop
 import { ActionForm, inputCls, L } from "@/components/master-forms";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { dateBR } from "@/lib/format";
+import { tsDateBR } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Profissionais" };
 
@@ -62,7 +62,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                   <form key={i.id} action={revokeInvite} className="mt-2 flex items-center justify-between gap-2 text-xs text-muted">
                     <input type="hidden" name="slug" value={slug} />
                     <input type="hidden" name="id" value={i.id} />
-                    <span>Convite pendente{i.email ? ` para ${i.email}` : ""} até {dateBR(i.expires_at)}</span>
+                    <span>Convite pendente{i.email ? ` para ${i.email}` : ""} até {tsDateBR(i.expires_at)}</span>
                     <button className="rounded-lg border border-line px-2.5 py-1 hover:bg-surface-2">Revogar</button>
                   </form>
                 ))}

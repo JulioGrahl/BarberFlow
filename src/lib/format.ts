@@ -23,3 +23,7 @@ export const STATUS_TONE: Record<string, string> = {
 };
 
 export const isoDateIn = (days: number) => new Date(Date.now() + days * 864e5).toISOString().slice(0, 10);
+
+// Data (dd/mm/aaaa) de um timestamptz, no fuso da barbearia.
+export const tsDateBR = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
