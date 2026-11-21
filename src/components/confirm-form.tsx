@@ -7,7 +7,7 @@ import { Field, FormMessage, SubmitButton } from "@/components/ui";
 export function ConfirmForm({ name, phone, ...p }: { name: string; phone: string; slug: string; shop: string; service: string; pro: string; at: string }) {
   const [state, action] = useActionState<BookingState, FormData>(createBooking, undefined);
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form action={action} className="space-y-4">
       {(Object.entries(p) as [string, string][]).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       <p className="text-sm text-muted">Confirme seus dados: a barbearia usa o nome e o WhatsApp para falar com você sobre o horário.</p>
       <Field label="Seu nome" id="name" autoComplete="name" required defaultValue={name} />

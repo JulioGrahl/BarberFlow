@@ -28,10 +28,12 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
   if (!svc || !pro) notFound();
 
   return (
-    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-md px-5 py-10">
+    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-4xl px-5 py-10 md:px-8">
       <Link href={`/b/${slug}/agendar`} className="text-sm text-muted hover:text-ink">← Escolher outro horário</Link>
       <h1 className="font-display mt-3 text-4xl">Confirmar agendamento</h1>
-      <dl className="mt-6 space-y-3 rounded-xl border border-line bg-surface p-5 text-sm">
+      <div className="mt-6 grid gap-6 md:grid-cols-2 md:gap-10">
+      <div>
+      <dl className="space-y-3 rounded-xl border border-line bg-surface p-5 text-sm">
         <div className="flex justify-between gap-4"><dt className="text-muted">Barbearia</dt><dd>{shop.name}</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-muted">Serviço</dt><dd>{svc.name} ({svc.duration_minutes} min)</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-muted">Profissional</dt><dd>{pro.display_name}</dd></div>
@@ -42,7 +44,9 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
         Agendando como <span className="text-ink">{user.email}</span>.{" "}
         <form action="/auth/signout" method="post" className="inline"><button className="underline hover:text-ink">Não é você? Sair</button></form>
       </div>
+      </div>
       <ConfirmForm name={profile?.full_name ?? ""} phone={profile?.phone ?? ""} slug={slug} shop={shop.id} service={q.data.service} pro={q.data.pro} at={q.data.at} />
+      </div>
     </main></div>
   );
 }
