@@ -2,7 +2,7 @@
 
 export function ClearBreak({ day }: { day: number }) {
   return (
-    <button type="button" className="rounded-md px-2 py-1 text-xs text-muted hover:bg-surface-2 hover:text-ink"
+    <button type="button" className="rounded-md px-2 py-1 text-sm text-ink underline decoration-line-strong underline-offset-2 hover:bg-surface-2"
       onClick={(e) => {
         const f = e.currentTarget.form;
         if (!f) return;

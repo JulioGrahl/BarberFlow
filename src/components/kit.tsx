@@ -32,7 +32,7 @@ export function Panel({ title, sub, aside, children, className = "" }: { title?:
         <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
           <div>
             <h2 className="font-display text-xl leading-tight">{title}</h2>
-            {sub ? <p className="mt-0.5 text-xs text-muted">{sub}</p> : null}
+            {sub ? <p className="mt-0.5 text-sm text-muted">{sub}</p> : null}
           </div>
           {aside}
         </div>

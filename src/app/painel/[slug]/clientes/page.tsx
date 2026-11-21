@@ -34,7 +34,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ slug
           <L label="Bloquear agendamento online após quantas faltas em 90 dias? (vazio = não bloquear)">
             <input key={`l${limit ?? ""}`} name="limit" type="number" min={1} max={20} defaultValue={limit ?? ""} placeholder="Desligado" className={inputCls} />
           </L>
-          <p className="text-xs text-muted sm:col-span-2">Quem passa do limite vê uma mensagem pedindo para falar com a barbearia pelo WhatsApp. Você pode liberar a qualquer momento na lista abaixo. Cancelar com antecedência não conta como falta.</p>
+          <p className="text-sm text-muted sm:col-span-2">Quem passa do limite vê uma mensagem pedindo para falar com a barbearia pelo WhatsApp. Você pode liberar a qualquer momento na lista abaixo. Cancelar com antecedência não conta como falta.</p>
         </ActionForm>
       </Panel>
 
