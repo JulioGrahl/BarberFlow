@@ -133,12 +133,17 @@ export async function setAppointmentStatus(fd: FormData): Promise<void> {
   const access = await requireShopAccess(slug);
   const id = z.uuid().safeParse(s(fd, "id"));
   const status = z.enum(["completed", "no_show", "cancelled"]).safeParse(s(fd, "status"));
-  const back = `/painel/${access.barbershop.slug}/agenda?dia=${/^\d{4}-\d{2}-\d{2}$/.test(s(fd, "dia")) ? s(fd, "dia") : ""}`;
-  if (!id.success || !status.success || (status.data === "cancelled" && access.role !== "owner")) redirect(`${back}&erro=1`);
+  const nextRaw = s(fd, "next");
+  const root = `/painel/${access.barbershop.slug}`;
+  // "next" só aceita caminhos internos do próprio painel (evita redirecionamento aberto)
+  const nextOk = nextRaw === root || (nextRaw.startsWith(`${root}/`) && !nextRaw.includes("//") && !nextRaw.includes("\\"));
+  const back = nextOk ? nextRaw : `${root}/agenda?dia=${/^\d{4}-\d{2}-\d{2}$/.test(s(fd, "dia")) ? s(fd, "dia") : ""}`;
+  const sep = back.includes("?") ? "&" : "?";
+  if (!id.success || !status.success || (status.data === "cancelled" && access.role !== "owner")) redirect(`${back}${sep}erro=1`);
   const supabase = await createClient();
   const { error } = await supabase.from("appointments").update({ status: status.data }).eq("id", id.data).eq("barbershop_id", access.barbershop.id).eq("status", "scheduled");
   revalidatePath(`/painel/${slug}`, "layout");
-  redirect(error ? `${back}&erro=1` : back);
+  redirect(error ? `${back}${sep}erro=1` : back);
 }
 
 // Registra que o dono enviou (manualmente) a mensagem de WhatsApp. O sistema não envia nada sozinho.

@@ -63,3 +63,11 @@ export const longDate = (ymd: string) =>
   new Date(`${ymd}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
 export const STATUS_APPT: Record<string, string> = { scheduled: "agendado", completed: "concluído", no_show: "faltou", cancelled: "cancelado" };
 export const nowMs = () => Date.now();
+
+// "em 25 min", "em 1h10", "agora", "há 12 min" — diferença em minutos entre um instante e agora.
+export function relTime(iso: string): string {
+  const m = Math.round((new Date(iso).getTime() - Date.now()) / 60e3);
+  const t = (n: number) => (n < 60 ? `${n} min` : `${Math.floor(n / 60)}h${String(n % 60).padStart(2, "0")}`);
+  if (Math.abs(m) < 1) return "agora";
+  return m > 0 ? `em ${t(m)}` : `há ${t(-m)}`;
+}

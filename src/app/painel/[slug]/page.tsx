@@ -1,126 +1,199 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarDays } from "lucide-react";
+import { ArrowRight, Check, MessageCircle, Phone, TriangleAlert, UserX, X } from "lucide-react";
+import { setAppointmentStatus } from "@/app/actions/shop";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { brl, nowMs, daysAgo, dayMonth, greeting, longDate, spParts, spStartISO, STATUS_APPT, timeBR, weekdayShort } from "@/lib/format";
-import { AreaChart, HBars, Heatmap, Sparkline } from "@/components/charts";
-import { Delta, Empty, PageHead, Panel, Stat, pctChange } from "@/components/kit";
+import { brl, dayMonth, daysAgo, greeting, longDate, nowISO, relTime, spParts, spStartISO, timeBR } from "@/lib/format";
+import { waLink } from "@/lib/whatsapp";
+import { Empty } from "@/components/kit";
+import { SubmitBtn } from "@/components/submit-btn";
 
-export const metadata: Metadata = { title: "Início" };
+export const metadata: Metadata = { title: "Hoje" };
 
 type Appt = {
-  id: string; starts_at: string; status: string; price_cents: number;
-  customers: { full_name: string } | null; services: { name: string } | null; professionals: { display_name: string } | null;
+  id: string; starts_at: string; ends_at: string; status: string; price_cents: number;
+  customers: { full_name: string; phone: string | null } | null;
+  services: { name: string } | null;
+  professionals: { display_name: string } | null;
 };
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 8);
+const SELECT = "id, starts_at, ends_at, status, price_cents, customers(full_name, phone), services(name), professionals(display_name)";
 
-export default async function ShopPanel({ params }: { params: Promise<{ slug: string }> }) {
+function Actions({ slug, id, owner, size }: { slug: string; id: string; owner: boolean; size: "lg" | "sm" }) {
+  const lg = size === "lg";
+  const btn = `inline-flex items-center justify-center gap-2 rounded-xl font-medium ${lg ? "min-h-12 flex-1 px-4 text-base" : "min-h-11 flex-1 px-3 text-sm"}`;
+  const items: [string, string, typeof Check, string][] = [
+    ["completed", "Concluir", Check, "bg-accent text-accent-ink"],
+    ["no_show", "Faltou", UserX, "border border-line bg-surface-2"],
+  ];
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map(([st, label, Icon, cls]) => (
+        <form key={st} action={setAppointmentStatus} className="flex flex-1">
+          <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={id} />
+          <input type="hidden" name="status" value={st} /><input type="hidden" name="next" value={`/painel/${slug}`} />
+          <SubmitBtn className={`${btn} ${cls} w-full`}><Icon size={lg ? 19 : 17} aria-hidden />{label}</SubmitBtn>
+        </form>
+      ))}
+      {owner ? (
+        <form action={setAppointmentStatus}>
+          <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={id} />
+          <input type="hidden" name="status" value="cancelled" /><input type="hidden" name="next" value={`/painel/${slug}`} />
+          <SubmitBtn className="inline-flex min-h-11 items-center justify-center rounded-xl border border-line px-3 text-muted hover:text-danger"><X size={18} aria-label="Cancelar agendamento" /></SubmitBtn>
+        </form>
+      ) : null}
+    </div>
+  );
+}
+
+function Contact({ a, shop }: { a: Appt; shop: string }) {
+  const first = (a.customers?.full_name ?? "").trim().split(/\s+/)[0];
+  const wa = waLink(a.customers?.phone, `Olá${first ? `, ${first}` : ""}! Aqui é da ${shop}.`);
+  const tel = (a.customers?.phone ?? "").replace(/\D/g, "");
+  if (!wa && !tel) return null;
+  const cls = "inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-3 text-sm text-muted hover:text-ink";
+  return (
+    <div className="flex gap-2">
+      {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className={cls}><MessageCircle size={16} aria-hidden />WhatsApp</a> : null}
+      {tel ? <a href={`tel:${tel}`} className={cls}><Phone size={16} aria-hidden />Ligar</a> : null}
+    </div>
+  );
+}
+
+export default async function TodayPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ erro?: string }> }) {
   const { slug } = await params;
+  const sp = await searchParams;
   const { barbershop, role } = await requireShopAccess(slug);
   const owner = role === "owner";
   const supabase = await createClient();
-  const today = daysAgo(0);
-  const from60 = daysAgo(59);
-  const [{ data: apptData }, { data: txData }] = await Promise.all([
-    supabase.from("appointments")
-      .select("id, starts_at, status, price_cents, customers(full_name), services(name), professionals(display_name)")
-      .eq("barbershop_id", barbershop.id).gte("starts_at", spStartISO(from60)).lt("starts_at", spStartISO(daysAgo(-1)))
-      .order("starts_at").limit(3000),
-    supabase.from("transactions").select("type, amount_cents, occurred_on").eq("barbershop_id", barbershop.id).eq("type", "income").gte("occurred_on", from60).limit(5000),
+  const today = daysAgo(0), tomorrow = daysAgo(-1);
+  const now = nowISO();
+
+  const [t, o, tm, comm] = await Promise.all([
+    supabase.from("appointments").select(SELECT).eq("barbershop_id", barbershop.id)
+      .gte("starts_at", spStartISO(today)).lt("starts_at", spStartISO(tomorrow)).order("starts_at"),
+    supabase.from("appointments").select(SELECT).eq("barbershop_id", barbershop.id).eq("status", "scheduled")
+      .lt("ends_at", now).gte("starts_at", spStartISO(daysAgo(30))).order("starts_at").limit(50),
+    supabase.from("appointments").select("starts_at").eq("barbershop_id", barbershop.id).neq("status", "cancelled")
+      .gte("starts_at", spStartISO(tomorrow)).lt("starts_at", spStartISO(daysAgo(-2))).order("starts_at").limit(100),
+    owner ? Promise.resolve({ data: null }) : supabase.from("professional_commissions").select("percent").eq("barbershop_id", barbershop.id).maybeSingle(),
   ]);
-  const appts = ((apptData ?? []) as unknown as Appt[]).map((a) => ({ ...a, ...spParts(a.starts_at) }));
-  const tx = (txData ?? []) as { amount_cents: number; occurred_on: string }[];
+  const todayAll = ((t.data ?? []) as unknown as Appt[]);
+  const overdue = ((o.data ?? []) as unknown as Appt[]);
+  const overdueIds = new Set(overdue.map((a) => a.id));
+  const open = todayAll.filter((a) => a.status === "scheduled" && !overdueIds.has(a.id));
+  const next = open[0];
+  const later = open.slice(1);
+  const finished = todayAll.filter((a) => a.status === "completed" || a.status === "no_show");
+  const doneToday = todayAll.filter((a) => a.status === "completed");
+  const earned = doneToday.reduce((s, a) => s + a.price_cents, 0);
+  const expected = todayAll.filter((a) => a.status === "scheduled").reduce((s, a) => s + a.price_cents, 0);
+  const pct = Number((comm.data as { percent: number } | null)?.percent ?? 0);
+  const tomorrowList = (tm.data ?? []) as { starts_at: string }[];
 
-  const days30 = Array.from({ length: 30 }, (_, i) => daysAgo(29 - i));
-  const cut = daysAgo(29);
-  const incByDay = new Map<string, number>();
-  for (const t of tx) incByDay.set(t.occurred_on, (incByDay.get(t.occurred_on) ?? 0) + t.amount_cents);
-  const daily = days30.map((d) => incByDay.get(d) ?? 0);
-  const rev30 = daily.reduce((a, b) => a + b, 0);
-  const revPrev = tx.filter((t) => t.occurred_on < cut).reduce((a, t) => a + t.amount_cents, 0);
-
-  const cur = appts.filter((a) => a.ymd >= cut);
-  const prev = appts.filter((a) => a.ymd < cut);
-  const done = (l: typeof appts) => l.filter((a) => a.status === "completed");
-  const done30 = done(cur), donePrev = done(prev);
-  const ticket = done30.length ? Math.round(done30.reduce((s, a) => s + a.price_cents, 0) / done30.length) : 0;
-  const closed = cur.filter((a) => ["completed", "no_show", "cancelled"].includes(a.status));
-  const lost = closed.filter((a) => a.status !== "completed").length;
-  const lostPct = closed.length ? (lost / closed.length) * 100 : 0;
-  const noShows = cur.filter((a) => a.status === "no_show");
-  const lostCents = noShows.reduce((a, x) => a + x.price_cents, 0);
-
-  const todayList = appts.filter((a) => a.ymd === today && a.status !== "cancelled");
-  const tNow = nowMs();
-  const nextId = todayList.find((a) => a.status === "scheduled" && new Date(a.starts_at).getTime() >= tNow - 15 * 60e3)?.id;
-
-  const heat = Array.from({ length: 7 }, () => HOURS.map(() => 0));
-  for (const a of appts) if (a.status !== "cancelled" && a.hour >= 8 && a.hour <= 20) heat[a.dow][a.hour - 8]++;
-  const heatTotal = heat.flat().reduce((a, b) => a + b, 0);
-
-  const group = (key: (a: Appt) => string) => {
-    const m = new Map<string, number>();
-    for (const a of done30) m.set(key(a), (m.get(key(a)) ?? 0) + a.price_cents);
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value]) => ({ label, value, text: brl(value) }));
-  };
-  const byService = group((a) => a.services?.name ?? "Serviço");
-  const byPro = group((a) => a.professionals?.display_name ?? "Profissional");
+  const card = "rounded-2xl border border-line bg-surface";
+  const sub = (a: Appt) => `${a.services?.name ?? "Serviço"}${owner ? ` · ${a.professionals?.display_name}` : ""} · ${brl(a.price_cents)}`;
 
   return (
-    <>
-      <PageHead title={`${greeting()}.`} sub={`${longDate(today)} · ${todayList.length === 0 ? "nenhum horário marcado hoje" : `${todayList.length} ${todayList.length === 1 ? "horário" : "horários"} hoje`}`}
-        actions={<Link href={`/painel/${slug}/agenda`} className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm hover:bg-surface"><CalendarDays size={16} aria-hidden /> Abrir agenda</Link>} />
+    <div className="mx-auto max-w-2xl lg:max-w-5xl">
+      <header className="mb-5">
+        <h1 className="font-display text-3xl leading-tight">{greeting()}.</h1>
+        <p className="text-sm capitalize text-muted">{longDate(today)}</p>
+      </header>
+      {sp.erro ? <p role="alert" className="mb-4 rounded-xl border border-danger/40 px-4 py-3 text-sm text-danger">Não foi possível atualizar o atendimento. Tente de novo.</p> : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat label={owner ? "Receita em 30 dias" : "Faturado em 30 dias"} value={brl(rev30)} hero>
-          <Sparkline values={daily} />
-          <div className="mt-2"><Delta pct={pctChange(rev30, revPrev)} /></div>
-        </Stat>
-        <Stat label="Atendimentos concluídos" value={String(done30.length)}><Delta pct={pctChange(done30.length, donePrev.length)} /></Stat>
-        <Stat label="Ticket médio" value={brl(ticket)}><span className="text-xs text-muted">por atendimento concluído</span></Stat>
-        <Stat label="Perdido com faltas" value={brl(lostCents)}><span className="text-xs text-muted">{noShows.length} {noShows.length === 1 ? "falta" : "faltas"} · {lostPct.toFixed(0)}% dos encerrados</span></Stat>
-      </div>
+      <section aria-label="Resumo do dia" className={`${card} mb-4 p-5`}>
+        <p className="text-sm text-muted">{owner ? "Faturado hoje" : "Você faturou hoje"}</p>
+        <p className="font-display mt-1 text-5xl leading-none">{brl(earned)}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
+          <div><p className="font-display text-2xl leading-none">{doneToday.length}</p><p className="mt-1 text-xs text-muted">atendidos</p></div>
+          <div><p className="font-display text-2xl leading-none">{open.length + overdue.filter((a) => spParts(a.starts_at).ymd === today).length}</p><p className="mt-1 text-xs text-muted">faltam</p></div>
+          <div><p className="font-display text-2xl leading-none">{brl(expected)}</p><p className="mt-1 text-xs text-muted">a receber</p></div>
+        </div>
+        {!owner && pct > 0 ? <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm">Sua comissão de hoje: <strong className="font-semibold text-accent">{brl(Math.round((earned * pct) / 100))}</strong> <span className="text-muted">({String(pct).replace(".", ",")}%)</span></p> : null}
+      </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-5">
-        <Panel title="Hoje" sub="Do primeiro ao último horário" className="lg:col-span-2">
-          {todayList.length === 0 ? <Empty>Sem horários hoje. Compartilhe o link da página pública para receber agendamentos.</Empty> : (
-            <ol className="relative space-y-1 before:absolute before:bottom-2 before:left-[3.35rem] before:top-2 before:w-px before:bg-line">
-              {todayList.map((a) => (
-                <li key={a.id} className={`relative flex items-start gap-3 rounded-lg px-1 py-2 ${a.id === nextId ? "bg-surface-2" : ""}`}>
-                  <span className="w-11 shrink-0 text-right text-sm tabular-nums text-muted">{timeBR(a.starts_at)}</span>
-                  <span className={`relative z-10 mt-1.5 size-2.5 shrink-0 rounded-full ring-4 ring-surface ${a.status === "completed" ? "bg-success" : a.status === "no_show" ? "bg-danger" : a.id === nextId ? "bg-accent" : "bg-line"}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{a.customers?.full_name ?? "Cliente"}</span>
-                    <span className="block truncate text-xs text-muted">{a.services?.name}{owner ? ` · ${a.professionals?.display_name}` : ""}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-muted">{a.id === nextId ? "próximo" : STATUS_APPT[a.status] ?? a.status}</span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </Panel>
-        <Panel title="Receita por dia" sub={`${dayMonth(days30[0])} a ${dayMonth(days30[29])}`} className="lg:col-span-3">
-          {rev30 === 0 ? <Empty>A receita aparece aqui quando os atendimentos forem concluídos na agenda.</Empty> :
-            <AreaChart labels={days30.map((d) => `${weekdayShort(d)} ${dayMonth(d)}`)} series={[{ name: "Receita", color: "var(--c1)", values: daily.map((v) => v / 100) }]} tickEvery={6} />}
-        </Panel>
-      </div>
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="space-y-4 lg:col-span-3">
+          {overdue.length > 0 ? (
+            <section aria-label="Atendimentos para fechar" className="rounded-2xl border border-warn/50 bg-surface">
+              <div className="flex items-start gap-3 px-5 pt-4">
+                <TriangleAlert size={20} className="mt-0.5 shrink-0 text-warn" aria-hidden />
+                <div>
+                  <h2 className="font-display text-lg leading-tight">{overdue.length} {overdue.length === 1 ? "atendimento para fechar" : "atendimentos para fechar"}</h2>
+                  <p className="text-xs text-muted">O horário passou e ninguém marcou como concluído ou falta. Enquanto isso, o valor não entra no caixa.</p>
+                </div>
+              </div>
+              <ul className="space-y-3 p-4">
+                {overdue.map((a) => {
+                  const d = spParts(a.starts_at).ymd;
+                  return (
+                    <li key={a.id} className="rounded-xl border border-line bg-surface-2 p-3.5">
+                      <div className="mb-3">
+                        <p className="font-medium">{a.customers?.full_name ?? "Cliente"}</p>
+                        <p className="text-sm text-muted">{d === today ? "Hoje" : dayMonth(d)} às {timeBR(a.starts_at)} · {sub(a)}</p>
+                      </div>
+                      <Actions slug={slug} id={a.id} owner={owner} size="sm" />
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <Panel title="Quando o movimento é maior" sub="Agendamentos por dia da semana e hora, últimos 60 dias">
-          {heatTotal === 0 ? <Empty>Ainda sem agendamentos para mostrar o padrão da semana.</Empty> : <Heatmap rows={heat} hours={HOURS} rowLabels={["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]} unit="agendamentos" />}
-        </Panel>
-        <div className="grid gap-4">
-          <Panel title="Serviços que mais faturam" sub="Últimos 30 dias">
-            {byService.length === 0 ? <Empty>Sem atendimentos concluídos no período.</Empty> : <HBars items={byService} />}
-          </Panel>
-          {owner ? (
-            <Panel title="Faturamento por profissional" sub="Últimos 30 dias">
-              {byPro.length === 0 ? <Empty>Sem atendimentos concluídos no período.</Empty> : <HBars items={byPro} color="var(--c2)" />}
-            </Panel>
+          {next ? (
+            <section aria-label="Próximo cliente" className="relative overflow-hidden rounded-2xl border border-accent/60 bg-surface p-5">
+              <span className="pole absolute inset-y-0 left-0 w-1.5" aria-hidden />
+              <p className="text-sm text-accent">Próximo cliente · {relTime(next.starts_at)}</p>
+              <p className="font-display mt-1 text-3xl leading-tight">{next.customers?.full_name ?? "Cliente"}</p>
+              <p className="mt-1 text-sm text-muted"><span className="tabular-nums text-ink">{timeBR(next.starts_at)}</span> · {sub(next)}</p>
+              <div className="mt-4"><Contact a={next} shop={barbershop.name} /></div>
+              <div className="mt-4"><Actions slug={slug} id={next.id} owner={owner} size="lg" /></div>
+            </section>
+          ) : overdue.length === 0 ? (
+            <Empty>{todayAll.length === 0 ? "Nenhum horário hoje. Compartilhe a página pública para receber agendamentos." : "Sem mais clientes por hoje."}</Empty>
+          ) : null}
+
+          {later.length > 0 ? (
+            <section aria-label="Mais tarde" className={`${card} p-5`}>
+              <h2 className="font-display mb-3 text-lg">Mais tarde</h2>
+              <ol className="divide-y divide-line">
+                {later.map((a) => (
+                  <li key={a.id} className="flex items-center gap-4 py-3">
+                    <span className="w-12 shrink-0 text-lg tabular-nums">{timeBR(a.starts_at)}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate font-medium">{a.customers?.full_name ?? "Cliente"}</span><span className="block truncate text-sm text-muted">{sub(a)}</span></span>
+                  </li>
+                ))}
+              </ol>
+            </section>
           ) : null}
         </div>
+
+        <div className="space-y-4 lg:col-span-2">
+          {finished.length > 0 ? (
+            <section aria-label="Já atendidos" className={`${card} p-5`}>
+              <h2 className="font-display mb-3 text-lg">Já passou</h2>
+              <ul className="divide-y divide-line">
+                {finished.map((a) => (
+                  <li key={a.id} className="flex items-center gap-3 py-2.5 text-sm">
+                    <span className="w-11 shrink-0 tabular-nums text-muted">{timeBR(a.starts_at)}</span>
+                    <span className="min-w-0 flex-1 truncate">{a.customers?.full_name ?? "Cliente"}</span>
+                    <span className={a.status === "completed" ? "text-success" : "text-warn"}>{a.status === "completed" ? brl(a.price_cents) : "faltou"}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <section aria-label="Amanhã" className={`${card} p-5`}>
+            <h2 className="font-display text-lg">Amanhã</h2>
+            <p className="mt-1 text-sm text-muted">
+              {tomorrowList.length === 0 ? "Nenhum horário marcado ainda." : `${tomorrowList.length} ${tomorrowList.length === 1 ? "horário" : "horários"}, começando às ${timeBR(tomorrowList[0].starts_at)}.`}
+            </p>
+            <Link href={`/painel/${slug}/agenda?dia=${tomorrow}`} className="mt-3 inline-flex min-h-10 items-center gap-1.5 text-sm text-accent">Ver agenda de amanhã <ArrowRight size={16} aria-hidden /></Link>
+          </section>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
