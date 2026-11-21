@@ -55,13 +55,13 @@ export default async function RemindersPage({ params, searchParams }: { params: 
                     const link = waLink(r.customers?.phone, text);
                     const isDone = done.has(`${r.id}:${kind}`);
                     return (
-                      <div key={kind} className="flex flex-wrap items-center gap-2 py-2 first:pt-3 last:pb-0 lg:first:pt-0">
-                        <span className="min-w-28 flex-1 font-medium">{label}</span>
-                        {link ? <WhatsAppLink href={link} className="min-h-9" /> : <span className="text-xs text-warn">telefone inválido</span>}
-                        {isDone ? <span className="inline-flex min-h-9 items-center gap-1 px-2 text-xs font-medium text-success">Enviado</span> : link ? (
+                      <div key={kind} className="grid grid-cols-2 items-center gap-2 py-2.5 first:pt-3 last:pb-0 sm:grid-cols-[minmax(6rem,1fr)_auto_8.5rem] lg:first:pt-0">
+                        <span className="col-span-2 font-medium sm:col-span-1">{label}</span>
+                        {link ? <WhatsAppLink href={link} className="min-h-9 justify-center" /> : <span className="col-span-2 text-sm text-warn sm:col-span-1">telefone inválido</span>}
+                        {isDone ? <span className="inline-flex min-h-9 items-center justify-center rounded-lg bg-success-bg px-3 text-sm font-medium text-success">Enviado</span> : link ? (
                           <form action={markNotificationSent}>
                             <input type="hidden" name="slug" value={slug} /><input type="hidden" name="appointment" value={r.id} /><input type="hidden" name="kind" value={kind} /><input type="hidden" name="message" value={text} />
-                            <button className="min-h-9 rounded-lg border border-line px-3 hover:bg-surface-2">Marcar enviado</button>
+                            <button className="min-h-9 w-full rounded-lg border border-line-strong px-3 hover:bg-surface-2">Marcar enviado</button>
                           </form>
                         ) : null}
                       </div>

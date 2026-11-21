@@ -27,7 +27,7 @@ export function WhatsAppLink({ href, className = "", dark = false }: { href: str
 
 export function Panel({ title, sub, aside, children, className = "" }: { title?: string; sub?: string; aside?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-line bg-surface ${className}`}>
+    <section className={`min-w-0 rounded-2xl border border-line bg-surface ${className}`}>
       {title ? (
         <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
           <div>

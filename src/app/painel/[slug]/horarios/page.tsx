@@ -52,7 +52,7 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
                   <span className="text-muted">às</span>
                   <input type="time" name={`end_${d}`} defaultValue={hm(r?.end_time) || "18:00"} className={time} aria-label={`${name}: fechamento`} />
                 </div>
-                <div className="flex items-center gap-2 text-xs group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
+                <div className="flex flex-wrap items-center gap-2 text-sm group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
                   <span className="text-muted">intervalo</span>
                   <input type="time" name={`bs_${d}`} defaultValue={hm(r?.break_start)} className={time} aria-label={`${name}: início do intervalo`} />
                   <span className="text-muted">–</span>
