@@ -13,9 +13,9 @@
   --bf-border: #cdd8dc;
   --bf-border-strong: #9fb1b9;
   --bf-text: #0e1b25;        /* tinta */
-  --bf-muted: #4d5f6a;
-  --bf-accent: #d2372b;      /* vermelho do poste: ação principal */
-  --bf-accent-hover: #b92e23;
+  --bf-muted: #3f505b;
+  --bf-accent: #1c4670;      /* azul-petróleo: ação principal (vermelho fica só para risco/exclusão) */
+  --bf-accent-hover: #12304e;
   --bf-accent-ink: #ffffff;
   --bf-blue: #2a5da8;        /* azul do poste: foco, links, seleção */
   --bf-success: #12744a;
@@ -29,7 +29,7 @@
   --bf-night-2: #162a3a;
   --bf-night-line: #27404f;
   --bf-night-text: #eaf1f4;
-  --bf-night-muted: #8fa6b4;
+  --bf-night-muted: #b4c6d1;
   --bf-flare: #ff7566;       /* vermelho legível sobre a placa escura */
   --bf-pole-red: #d2372b;
   --bf-pole-white: #f6f8f8;
@@ -116,7 +116,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--bf-accent); }
 
 /* Azulejo hexagonal: textura de fundo (variante para o escuro e para o claro) */
 .hex-dark {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.035' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 56px 97px;
 }
 .hex-light {

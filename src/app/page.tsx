@@ -23,10 +23,9 @@ export default async function Home() {
   return (
     <div className="flex-1">
       <section className="hex-dark relative overflow-hidden bg-night text-night-ink">
-        <span className="pole absolute inset-y-0 left-0 w-2.5 sm:w-3" aria-hidden />
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
           <span className="font-display text-2xl">BarberFlow</span>
-          {home ? <Link href={home} className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">Abrir meu painel</Link>
+          {home ? <Link href={home} className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-night hover:bg-night-ink">Abrir meu painel</Link>
             : <Link href="/login" className="rounded-lg border border-night-line px-4 py-2.5 text-sm hover:bg-night-2">Entrar</Link>}
         </header>
         <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 pb-20 pt-10 sm:px-10 lg:grid-cols-[1.25fr_1fr] lg:pb-28 lg:pt-16">
@@ -35,7 +34,7 @@ export default async function Home() {
             <p className="mt-7 max-w-lg text-lg text-night-muted">Agenda online, equipe, comissões e financeiro da sua barbearia em um só lugar, com a sua própria página para os clientes agendarem.</p>
             {!home ? (
               <div className="mt-9 flex flex-wrap gap-3">
-                <Link href="/cadastro" className="min-h-12 rounded-lg bg-accent px-6 py-3 font-semibold text-white hover:bg-accent-hover">Criar conta de cliente</Link>
+                <Link href="/cadastro" className="min-h-12 rounded-lg bg-white px-6 py-3 font-semibold text-night hover:bg-night-ink">Criar conta de cliente</Link>
                 <Link href="/login" className="min-h-12 rounded-lg border border-night-line px-6 py-3 hover:bg-night-2">Já tenho conta</Link>
               </div>
             ) : null}
@@ -63,7 +62,6 @@ export default async function Home() {
             </div>
             <div className="comanda-wrap absolute -bottom-24 -right-3 w-52 rotate-3 sm:-right-8">
               <div className="rounded-2xl bg-white p-4 text-ink">
-                <span className="pole absolute inset-x-4 top-0 h-1 rounded-b" />
                 <p className="text-xs text-muted">Faturado hoje</p>
                 <p className="font-display text-4xl leading-none">R$ 1.240</p>
                 <p className="mt-1.5 text-xs text-success">9 atendidos · 3 faltam</p>
@@ -107,7 +105,6 @@ export default async function Home() {
 
         <section className="mx-auto w-full max-w-6xl px-6 py-20 sm:px-10">
           <div className="hex-dark relative overflow-hidden rounded-3xl bg-night px-7 py-12 text-night-ink sm:px-14 sm:py-16">
-            <span className="pole absolute inset-x-0 top-0 h-2" aria-hidden />
             <h2 className="font-display max-w-2xl text-5xl leading-[0.95] sm:text-6xl">É dono de barbearia? Libere o seu painel.</h2>
             <p className="mt-5 max-w-xl text-night-muted">A implantação é feita pela nossa equipe. Fale com a gente e a sua barbearia entra no ar com serviços, horários e equipe já configurados.</p>
           </div>

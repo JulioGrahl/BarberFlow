@@ -111,14 +111,17 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
                 <div className="w-14 shrink-0 pt-4 text-right"><p className="font-display text-xl leading-none">{timeBR(r.starts_at)}</p><p className="text-xs tabular-nums text-muted">{timeBR(r.ends_at)}</p></div>
                 <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface py-3 pl-5 pr-4">
                   <span className={`absolute inset-y-0 left-0 w-1 ${bar}`} aria-hidden />
-                  <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                  <div className="grid gap-x-6 gap-y-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{r.customers?.full_name ?? "Cliente"}</p>
-                      <p className="truncate text-sm text-muted">{r.services?.name}{role === "owner" ? ` · ${r.professionals?.display_name}` : ""} · {brl(r.price_cents)}</p>
-                      {r.customers?.phone ? <p className="text-xs text-muted">{r.customers.phone}</p> : null}
+                      <p className="truncate font-semibold">{r.customers?.full_name ?? "Cliente"}</p>
+                      {r.customers?.phone ? <p className="text-sm tabular-nums text-muted">{r.customers.phone}</p> : null}
                       {r.status === "scheduled" && (flags.get(r.customer_id)?.no_shows || flags.get(r.customer_id)?.blocked) ? (
                         <p className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-warn/30 bg-warn-bg px-2 py-0.5 text-xs text-warn">{flags.get(r.customer_id)!.no_shows} faltas em 90 dias{flags.get(r.customer_id)!.blocked ? " · bloqueado online" : ""}</p>
                       ) : null}
+                    </div>
+                    <div className="min-w-0 text-sm">
+                      <p className="truncate">{r.services?.name}</p>
+                      <p className="truncate text-muted">{role === "owner" ? `${r.professionals?.display_name} · ` : ""}{brl(r.price_cents)}</p>
                     </div>
                     {r.status === "scheduled" ? (
                       <div className="flex flex-wrap gap-1.5">

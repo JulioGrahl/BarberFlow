@@ -138,11 +138,11 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
         </Stat>
         <Stat label="Receitas" value={brl(income)}><Delta pct={pctChange(income, prevIncome)} /></Stat>
         <Stat label="Despesas" value={brl(expense)}><Delta pct={pctChange(expense, prevExpense)} inverse /></Stat>
+        {nsData && nsData.length > 0 ? (
+          <Stat label="Perdido com faltas" value={brl(noShowCents)}><p className="text-xs text-muted">{nsData.length} {nsData.length === 1 ? "cliente faltou" : "clientes faltaram"} no mês. Fora da receita.</p></Stat>
+        ) : null}
       </div>
 
-      {nsData && nsData.length > 0 ? (
-        <p className="mt-3 text-sm text-muted">{nsData.length} {nsData.length === 1 ? "cliente faltou" : "clientes faltaram"} neste mês: {brl(noShowCents)} que deixaram de entrar. Esse valor não está na receita.</p>
-      ) : null}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Panel title="Receitas e despesas por dia" className="lg:col-span-3">

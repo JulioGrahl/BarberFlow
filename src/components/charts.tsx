@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 
 export type Series = { name: string; color: string; values: number[] };
 
-const W = 640, H = 230, PL = 8, PR = 8, PT = 14, PB = 26;
+const W = 640, H = 230, PL = 58, PR = 14, PT = 16, PB = 30;
 
 function niceMax(v: number) {
   if (v <= 0) return 1;
@@ -24,7 +24,7 @@ export function AreaChart({ labels, series, fmt = "brl", tickEvery = 5 }: { labe
   const x = (i: number) => PL + (n <= 1 ? 0 : (i / (n - 1)) * (W - PL - PR));
   const y = (v: number) => PT + (1 - v / max) * (H - PT - PB);
   const path = (vals: number[]) => vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const grid = [0, 0.5, 1].map((f) => f * max);
+  const grid = [0, 0.25, 0.5, 0.75, 1].map((f) => f * max);
   const single = series.length === 1;
 
   function onMove(e: React.PointerEvent) {
@@ -47,11 +47,11 @@ export function AreaChart({ labels, series, fmt = "brl", tickEvery = 5 }: { labe
         </defs>
         {grid.map((g) => (
           <g key={g}>
-            <line x1={PL} x2={W - PR} y1={y(g)} y2={y(g)} stroke="var(--bf-border)" strokeWidth="1" strokeDasharray={g === 0 ? undefined : "2 4"} />
-            {g > 0 ? <text x={PL} y={y(g) - 4} fontSize="10" fill="var(--bf-muted)">{format(g)}</text> : null}
+            <line x1={PL} x2={W - PR} y1={y(g)} y2={y(g)} stroke="var(--bf-border)" strokeWidth="1" strokeOpacity={g === 0 ? 1 : 0.8} />
+            <text x={PL - 8} y={y(g) + 4} fontSize="11" fill="var(--bf-muted)" textAnchor="end">{format(g)}</text>
           </g>
         ))}
-        {labels.map((l, i) => (i % tickEvery === 0 || i === n - 1 ? <text key={i} x={x(i)} y={H - 8} fontSize="10" fill="var(--bf-muted)" textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}>{l}</text> : null))}
+        {labels.map((l, i) => (i % tickEvery === 0 || i === n - 1 ? <text key={i} x={x(i)} y={H - 9} fontSize="11" fill="var(--bf-muted)" textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}>{l}</text> : null))}
         {series.map((s, i) => (
           <g key={s.name}>
             {single ? <path d={`${path(s.values)} L${x(n - 1)},${y(0)} L${x(0)},${y(0)} Z`} fill={`url(#${id}-g${i})`} /> : null}

@@ -3,7 +3,7 @@ import { markNotificationSent } from "@/app/actions/shop";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fullDateTimeBR, nextDays, nowISO } from "@/lib/format";
-import { Empty, PageHead } from "@/components/kit";
+import { Empty, PageHead, WhatsAppLink } from "@/components/kit";
 import { buildMessage, waLink, type MsgKind } from "@/lib/whatsapp";
 
 export const metadata: Metadata = { title: "Lembretes" };
@@ -38,27 +38,30 @@ export default async function RemindersPage({ params, searchParams }: { params: 
       <PageHead title="Lembretes" sub="Hoje e amanhã. O botão abre o WhatsApp com a mensagem pronta; você envia e marca como enviado. Nada é enviado automaticamente." />
       {sp.erro ? <p role="alert" className="mb-4 rounded-lg border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">Não foi possível registrar o envio.</p> : null}
       {rows.length === 0 ? <Empty>Nenhum atendimento agendado para hoje ou amanhã.</Empty> : (
-        <ul className="grid gap-3 lg:grid-cols-2">
+        <ul className="space-y-3">
           {rows.map((r) => {
             const info = { customer: r.customers?.full_name ?? "", shop: barbershop.name, service: r.services?.name ?? "", pro: r.professionals?.display_name ?? "", when: fullDateTimeBR(r.starts_at) };
             return (
-              <li key={r.id} className="rounded-xl border border-line bg-surface p-4 text-sm">
-                <p className="font-display text-2xl leading-tight">{r.customers?.full_name}</p>
-                <p className="text-muted">{r.services?.name} com {r.professionals?.display_name}</p>
-                <p className="text-muted">{fullDateTimeBR(r.starts_at)} · {r.customers?.phone ?? "sem telefone"}</p>
-                <div className="mt-3 space-y-2 border-t border-line pt-3">
+              <li key={r.id} className="grid gap-x-6 gap-y-3 rounded-xl border border-line bg-surface p-4 text-sm lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+                <div className="min-w-0">
+                  <p className="font-display text-2xl leading-tight">{r.customers?.full_name}</p>
+                  <p>{r.services?.name} · {r.professionals?.display_name}</p>
+                  <p className="text-muted">{fullDateTimeBR(r.starts_at)}</p>
+                  <p className="tabular-nums text-muted">{r.customers?.phone ?? "sem telefone"}</p>
+                </div>
+                <div className="divide-y divide-line border-t border-line lg:border-l lg:border-t-0 lg:pl-6">
                   {KINDS.map(([kind, label]) => {
                     const text = buildMessage(kind, info);
                     const link = waLink(r.customers?.phone, text);
                     const isDone = done.has(`${r.id}:${kind}`);
                     return (
-                      <div key={kind} className="flex items-center gap-2">
-                        <span className="w-24 text-muted">{label}</span>
-                        {link ? <a href={link} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-accent-ink hover:bg-accent-hover">WhatsApp</a> : <span className="text-xs text-warn">telefone inválido</span>}
-                        {isDone ? <span className="text-xs text-success">enviado</span> : link ? (
+                      <div key={kind} className="flex flex-wrap items-center gap-2 py-2 first:pt-3 last:pb-0 lg:first:pt-0">
+                        <span className="min-w-28 flex-1 font-medium">{label}</span>
+                        {link ? <WhatsAppLink href={link} className="min-h-9" /> : <span className="text-xs text-warn">telefone inválido</span>}
+                        {isDone ? <span className="inline-flex min-h-9 items-center gap-1 px-2 text-xs font-medium text-success">Enviado</span> : link ? (
                           <form action={markNotificationSent}>
                             <input type="hidden" name="slug" value={slug} /><input type="hidden" name="appointment" value={r.id} /><input type="hidden" name="kind" value={kind} /><input type="hidden" name="message" value={text} />
-                            <button className="rounded-lg border border-line px-3 py-1.5 hover:bg-surface-2">Marcar enviado</button>
+                            <button className="min-h-9 rounded-lg border border-line px-3 hover:bg-surface-2">Marcar enviado</button>
                           </form>
                         ) : null}
                       </div>

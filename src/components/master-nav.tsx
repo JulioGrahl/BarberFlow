@@ -17,7 +17,6 @@ export function MasterNav() {
   return (
     <>
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-night px-3 py-5 pl-5 text-night-ink md:flex">
-        <span className="pole absolute inset-y-0 left-0 w-2" aria-hidden />
         <div className="mb-8 px-3"><p className="font-display text-2xl leading-tight">BarberFlow</p><p className="mt-0.5 text-xs text-night-muted">Administração</p></div>
         <nav className="flex flex-1 flex-col gap-0.5">
           {items.map(({ href, label, icon: Icon, exact }) => {
@@ -34,7 +33,6 @@ export function MasterNav() {
         </form>
       </aside>
       <header className="sticky top-0 z-30 flex items-center justify-between bg-night px-4 pb-3.5 pt-[max(0.75rem,env(safe-area-inset-top))] text-night-ink md:hidden">
-        <span className="pole absolute inset-x-0 bottom-0 h-1" aria-hidden />
         <p className="font-display text-2xl">BarberFlow</p>
         <form action="/auth/signout" method="post"><button aria-label="Sair" className="rounded-lg p-2 text-night-muted hover:text-white"><LogOut size={18} /></button></form>
       </header>

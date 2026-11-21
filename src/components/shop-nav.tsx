@@ -34,7 +34,6 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
     <>
       {/* Desktop: placa escura com o poste na borda */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-night px-3 py-5 pl-5 text-night-ink md:flex">
-        <span className="pole absolute inset-y-0 left-0 w-2" aria-hidden />
         <div className="mb-8 px-3">
           <p className="font-display truncate text-2xl leading-tight">{name}</p>
           <p className="mt-0.5 text-xs text-night-muted">{owner ? "Proprietário" : "Barbeiro"}</p>
@@ -45,7 +44,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} className={side(active)}>
                 <Icon size={18} aria-hidden className={active ? "text-flare" : ""} /> {label}
-                {exact && pending > 0 ? <span className="ml-auto rounded-full bg-accent px-1.5 text-xs font-semibold text-white" aria-label={`${pending} para fechar`}>{pending}</span> : null}
+                {exact && pending > 0 ? <span className="ml-auto rounded-full bg-danger px-1.5 text-xs font-semibold text-white" aria-label={`${pending} para fechar`}>{pending}</span> : null}
               </Link>
             );
           })}
@@ -64,7 +63,6 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
 
       {/* Mobile */}
       <header className="sticky top-0 z-30 flex items-center justify-between bg-night px-4 pb-3.5 pt-[max(0.75rem,env(safe-area-inset-top))] text-night-ink md:hidden">
-        <span className="pole absolute inset-x-0 bottom-0 h-1" aria-hidden />
         <p className="font-display truncate text-2xl">{name}</p>
         <form action="/auth/signout" method="post"><button aria-label="Sair" className="rounded-lg p-2 text-night-muted hover:text-white"><LogOut size={18} /></button></form>
       </header>
@@ -75,7 +73,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
             <Link key={href} href={href} aria-current={active ? "page" : undefined}
               className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl text-xs ${active ? "bg-night-2 font-medium text-white" : "text-night-muted"}`}>
               <span className="relative"><Icon size={21} aria-hidden className={active ? "text-flare" : ""} />
-                {exact && pending > 0 ? <span className="absolute -right-3 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-bold leading-4 text-white" aria-label={`${pending} para fechar`}>{pending}</span> : null}
+                {exact && pending > 0 ? <span className="absolute -right-3 -top-1.5 min-w-4 rounded-full bg-danger px-1 text-center text-[10px] font-bold leading-4 text-white" aria-label={`${pending} para fechar`}>{pending}</span> : null}
               </span>
               {label}
             </Link>
@@ -89,7 +87,6 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
         <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Mais opções">
           <button type="button" aria-label="Fechar" className="absolute inset-0 bg-night/60" onClick={() => setMore(false)} />
           <div className="absolute inset-x-0 bottom-0 overflow-hidden rounded-t-3xl bg-surface px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
-            <span className="pole absolute inset-x-0 top-0 h-1.5" aria-hidden />
             <div className="mb-2 flex items-center justify-between px-2 pt-1">
               <p className="font-display text-2xl">{name}</p>
               <button type="button" onClick={() => setMore(false)} aria-label="Fechar" className="rounded-lg p-2 text-muted"><X size={20} /></button>

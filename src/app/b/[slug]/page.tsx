@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { brl, nowISO, spParts } from "@/lib/format";
+import { WhatsAppLink } from "@/components/kit";
 import { waLink } from "@/lib/whatsapp";
 
 type Hour = { weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null };
@@ -55,7 +55,7 @@ export default async function ShopPage({ params }: Props) {
           ) : null}
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href={`/b/${shop.slug}/agendar`} className="min-h-13 rounded-xl bg-accent px-7 py-3.5 text-lg font-semibold text-white shadow-[0_8px_20px_rgb(210_55_43/.35)] transition hover:bg-accent-hover active:translate-y-px">Agendar horário</Link>
-            {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-13 items-center gap-2 rounded-xl border border-night-line px-6 py-3.5 text-lg hover:bg-night-2"><MessageCircle size={20} aria-hidden /> WhatsApp</a> : null}
+            {wa ? <WhatsAppLink href={wa} dark className="min-h-13 rounded-xl px-6 text-lg" /> : null}
           </div>
         </div>
       </section>

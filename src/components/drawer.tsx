@@ -19,7 +19,6 @@ export function Drawer({ trigger, title, children, triggerClassName }: { trigger
       <dialog ref={ref} className="drawer" onClick={(e) => { if (e.target === ref.current) close(); }} aria-label={title}>
         <div className="flex h-full flex-col">
           <div className="relative flex items-center justify-between bg-night px-5 py-4 text-night-ink">
-            <span className="pole absolute inset-x-0 bottom-0 h-1" aria-hidden />
             <h2 className="font-display text-2xl">{title}</h2>
             <button type="button" onClick={close} aria-label="Fechar" className="rounded-lg p-1.5 text-night-muted hover:bg-night-2 hover:text-night-ink"><X size={18} /></button>
           </div>

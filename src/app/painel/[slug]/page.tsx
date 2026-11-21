@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, MessageCircle, Phone, TriangleAlert, UserX, X } from "lucide-react";
+import { ArrowRight, Check, Phone, TriangleAlert, UserX, X } from "lucide-react";
 import { setAppointmentStatus } from "@/app/actions/shop";
 import { getUser, requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -10,7 +10,7 @@ import { RefreshButton } from "@/components/refresh-button";
 import { WalkInButton } from "@/components/walkin-form";
 import { RescheduleButton } from "@/components/reschedule-form";
 import { waLink } from "@/lib/whatsapp";
-import { Empty } from "@/components/kit";
+import { Empty, WhatsAppLink } from "@/components/kit";
 import { SubmitBtn } from "@/components/submit-btn";
 
 export const metadata: Metadata = { title: "Hoje" };
@@ -32,7 +32,6 @@ function Actions({ slug, id, owner, size, started = true, resched }: { slug: str
   ];
   return (
     <div className="flex flex-wrap gap-2">
-      {!started ? <p className="w-full text-sm text-muted">Ainda não começou: Concluir e Faltou liberam perto do horário.</p> : null}
       {resched}
       {started ? items.map(([st, label, Icon, cls]) => (
         <form key={st} action={setAppointmentStatus} className="flex flex-1">
@@ -40,7 +39,9 @@ function Actions({ slug, id, owner, size, started = true, resched }: { slug: str
           <input type="hidden" name="status" value={st} /><input type="hidden" name="next" value={`/painel/${slug}`} />
           <SubmitBtn className={`${btn} ${cls} w-full`}><Icon size={lg ? 19 : 17} aria-hidden />{label}</SubmitBtn>
         </form>
-      )) : null}
+      )) : items.map(([st, label, Icon]) => (
+        <button key={st} type="button" disabled title="Libera perto do horário do atendimento" className={`${btn} flex-1 cursor-not-allowed border border-line bg-surface-2 text-muted opacity-70`}><Icon size={lg ? 19 : 17} aria-hidden />{label}</button>
+      ))}
       {owner ? (
         <form action={setAppointmentStatus}>
           <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={id} />
@@ -65,7 +66,7 @@ function Contact({ a, shop }: { a: Appt; shop: string }) {
   const cls = "inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line-strong px-3 text-sm hover:bg-surface-2";
   return (
     <div className="flex gap-2">
-      {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className={cls}><MessageCircle size={16} aria-hidden />WhatsApp</a> : null}
+      {wa ? <WhatsAppLink href={wa} /> : null}
       {tel ? <a href={`tel:${tel}`} className={cls}><Phone size={16} aria-hidden />Ligar</a> : null}
     </div>
   );
@@ -130,7 +131,6 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
       {sp.erro ? <p role="alert" className="mb-4 rounded-xl border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">Não foi possível atualizar o atendimento. Tente de novo.</p> : null}
 
       <section aria-label="Resumo do dia" className="hex-dark relative mb-4 overflow-hidden rounded-2xl bg-night p-5 pt-6 text-night-ink">
-        <span className="pole absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <p className="text-sm text-night-muted">{owner ? "Faturado hoje" : "Você faturou hoje"}</p>
         <p className="font-display mt-1 text-7xl leading-none">{brl(earned)}</p>
         <div className="mt-5 grid grid-cols-3 gap-2 border-t border-night-line pt-4">
