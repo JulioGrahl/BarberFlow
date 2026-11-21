@@ -49,7 +49,7 @@ export default async function CustomersPage({ params }: { params: Promise<{ slug
                     <p className="text-xs text-muted">{c.phone || "sem WhatsApp"}</p>
                   </div>
                   <span className={`text-sm ${c.no_shows > 0 ? "text-warn" : "text-muted"}`}>{c.no_shows} {c.no_shows === 1 ? "falta" : "faltas"}</span>
-                  {c.booking_blocked ? <span className="rounded-md border border-danger/40 px-2 py-0.5 text-xs text-danger">bloqueado online</span> : null}
+                  {c.booking_blocked ? <span className="rounded-md border border-danger/30 bg-danger-bg px-2 py-0.5 text-xs text-danger">bloqueado online</span> : null}
                   <form action={toggleCustomerBlock}>
                     <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={c.id} /><input type="hidden" name="block" value={c.booking_blocked ? "0" : "1"} />
                     <button className="min-h-10 rounded-lg border border-line px-3 text-sm hover:bg-surface-2">{c.booking_blocked ? "Liberar" : "Bloquear online"}</button>

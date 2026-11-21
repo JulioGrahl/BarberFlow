@@ -19,7 +19,7 @@ type Row = {
   professionals: { display_name: string } | null;
 };
 const STATUS: Record<string, [string, string, string]> = {
-  scheduled: ["Agendado", "bg-accent", "text-accent"],
+  scheduled: ["Agendado", "bg-blue", "text-blue"],
   completed: ["Concluído", "bg-success", "text-success"],
   no_show: ["Faltou", "bg-warn", "text-warn"],
   cancelled: ["Cancelado", "bg-line", "text-muted"],
@@ -81,10 +81,10 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
           const on = d === day, n = counts.get(d) ?? 0;
           return (
             <Link key={d} href={qs(d)} aria-current={on ? "date" : undefined}
-              className={`rounded-lg border px-1 py-2.5 text-center transition ${on ? "border-accent bg-surface-2" : "border-line hover:bg-surface"}`}>
-              <span className="block text-xs text-muted">{weekdayShort(d)}</span>
-              <span className={`font-display block text-xl leading-tight ${d === today ? "text-accent" : ""}`}>{d.slice(8)}</span>
-              <span className="mt-1 flex h-1.5 justify-center gap-0.5">{Array.from({ length: Math.min(n, 5) }, (_, i) => <i key={i} className="size-1.5 rounded-full bg-accent/70" />)}</span>
+              className={`rounded-xl border px-1 py-2.5 text-center transition ${on ? "border-night bg-night text-night-ink" : "border-line bg-surface hover:border-line-strong"}`}>
+              <span className={`block text-xs ${on ? "text-night-muted" : "text-muted"}`}>{weekdayShort(d)}</span>
+              <span className={`font-display block text-2xl leading-tight ${d === today && !on ? "text-accent" : ""}`}>{d.slice(8)}</span>
+              <span className="mt-1 flex h-1.5 justify-center gap-0.5">{Array.from({ length: Math.min(n, 5) }, (_, i) => <i key={i} className={`size-1.5 rounded-full ${on ? "bg-flare" : "bg-accent"}`} />)}</span>
             </Link>
           );
         })}
@@ -94,12 +94,12 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
         <div className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">
           {[{ id: "", display_name: "Todos" }, ...(pros.data ?? [])].map((p) => (
             <Link key={p.id} href={p.id ? `${base}?dia=${day}&pro=${p.id}` : `${base}?dia=${day}`}
-              className={`rounded-md px-3 py-1.5 text-sm ${(sp.pro ?? "") === p.id ? "bg-surface-2 text-accent" : "text-muted hover:text-ink"}`}>{p.display_name}</Link>
+              className={`rounded-md px-3 py-1.5 text-sm ${(sp.pro ?? "") === p.id ? "bg-night font-medium text-white" : "text-muted hover:text-ink"}`}>{p.display_name}</Link>
           ))}
         </div>
       ) : null}
 
-      {sp.erro ? <p role="alert" className="mb-4 rounded-lg border border-danger/40 px-3.5 py-2.5 text-sm text-danger">Não foi possível atualizar o atendimento.</p> : null}
+      {sp.erro ? <p role="alert" className="mb-4 rounded-lg border border-danger/30 bg-danger-bg px-3.5 py-2.5 text-sm text-danger">Não foi possível atualizar o atendimento.</p> : null}
       <p className="mb-4 text-sm text-muted">{rows.length === 0 ? "Sem atendimentos" : `${open} por atender · ${rows.length - open} encerrados`}{role === "owner" && total > 0 ? ` · ${brl(total)} concluídos` : ""}</p>
 
       {rows.length === 0 ? <Empty>Nenhum atendimento neste dia. Escolha outro dia na faixa acima.</Empty> : (
@@ -108,7 +108,7 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
             const [label, bar, text] = STATUS[r.status] ?? [r.status, "bg-line", "text-muted"];
             return (
               <li key={r.id} className="flex gap-3">
-                <div className="w-14 shrink-0 pt-4 text-right"><p className="text-sm font-medium tabular-nums">{timeBR(r.starts_at)}</p><p className="text-xs tabular-nums text-muted">{timeBR(r.ends_at)}</p></div>
+                <div className="w-14 shrink-0 pt-4 text-right"><p className="font-display text-xl leading-none">{timeBR(r.starts_at)}</p><p className="text-xs tabular-nums text-muted">{timeBR(r.ends_at)}</p></div>
                 <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-line bg-surface py-3 pl-5 pr-4">
                   <span className={`absolute inset-y-0 left-0 w-1 ${bar}`} aria-hidden />
                   <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
@@ -117,7 +117,7 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
                       <p className="truncate text-sm text-muted">{r.services?.name}{role === "owner" ? ` · ${r.professionals?.display_name}` : ""} · {brl(r.price_cents)}</p>
                       {r.customers?.phone ? <p className="text-xs text-muted">{r.customers.phone}</p> : null}
                       {r.status === "scheduled" && (flags.get(r.customer_id)?.no_shows || flags.get(r.customer_id)?.blocked) ? (
-                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-warn/40 px-2 py-0.5 text-xs text-warn">{flags.get(r.customer_id)!.no_shows} faltas em 90 dias{flags.get(r.customer_id)!.blocked ? " · bloqueado online" : ""}</p>
+                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-warn/30 bg-warn-bg px-2 py-0.5 text-xs text-warn">{flags.get(r.customer_id)!.no_shows} faltas em 90 dias{flags.get(r.customer_id)!.blocked ? " · bloqueado online" : ""}</p>
                       ) : null}
                     </div>
                     {r.status === "scheduled" ? (
@@ -125,7 +125,7 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
                         <RescheduleButton slug={slug} id={r.id} date={spParts(r.starts_at).ymd} time={timeBR(r.starts_at)} who={r.customers?.full_name ?? "Cliente"} proId={r.professional_id}
                           pros={role === "owner" ? staffPros.filter((x) => x.services.some((sv) => sv.id === r.service_id)).map((x) => ({ id: x.id, name: x.name })) : undefined}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-surface-2" />
-                        {([["completed", "Concluir", Check, "bg-accent text-accent-ink hover:brightness-110"], ["no_show", "Faltou", UserX, "border border-line hover:bg-surface-2"]] as [string, string, typeof Check, string][])
+                        {([["completed", "Concluir", Check, "bg-night text-white hover:bg-night-2"], ["no_show", "Faltou", UserX, "border border-line hover:bg-surface-2"]] as [string, string, typeof Check, string][])
                           .filter(() => canClose(r.starts_at)).map(([st, text, Icon, cls]) => (
                           <form key={st} action={setAppointmentStatus}>
                             <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={r.id} /><input type="hidden" name="status" value={st} /><input type="hidden" name="dia" value={day} />

@@ -1,23 +1,47 @@
 @import "tailwindcss";
 
-/* BarberFlow: verde-garrafa e latão, com o poste de barbeiro como assinatura. */
+/*
+  BarberFlow — "Azulejo & Poste".
+  Piso de azulejo claro, tinta azul-noite da placa esmaltada, o vermelho e o azul do poste.
+  Claro por padrão (funciona sob a luz da barbearia e na rua); blocos em tinta escura para o que importa.
+*/
 :root {
-  color-scheme: dark;
-  --bf-bg: #0e1512;
-  --bf-surface: #141d19;
-  --bf-surface-2: #1b2621;
-  --bf-border: #2a3a33;
-  --bf-text: #eae6d8;
-  --bf-muted: #98a196;
-  --bf-accent: #c9a15b;
-  --bf-accent-ink: #1a1405;
-  --bf-success: #6fbf8f;
-  --bf-warn: #e0a24a;
-  --bf-danger: #e0715f;
-  --bf-pole-red: #c8453b;
-  --bf-pole-blue: #3e6fb0;
-  /* séries dos gráficos (validadas contra a superfície) */
-  --c1: #b98a2e; --c2: #2e9e8e; --c3: #d4553f; --c4: #6c84e0; --c5: #869628; --c6: #b5619f;
+  color-scheme: light;
+  --bf-bg: #e9eff1;          /* rejunte / azulejo */
+  --bf-surface: #ffffff;     /* ladrilho */
+  --bf-surface-2: #f1f5f6;   /* ladrilho sombreado (campos, linhas alternadas) */
+  --bf-border: #cdd8dc;
+  --bf-border-strong: #9fb1b9;
+  --bf-text: #0e1b25;        /* tinta */
+  --bf-muted: #4d5f6a;
+  --bf-accent: #d2372b;      /* vermelho do poste: ação principal */
+  --bf-accent-hover: #b92e23;
+  --bf-accent-ink: #ffffff;
+  --bf-blue: #2a5da8;        /* azul do poste: foco, links, seleção */
+  --bf-success: #12744a;
+  --bf-warn: #965800;
+  --bf-danger: #9c1428;
+  --bf-warn-bg: #fff3d9;
+  --bf-success-bg: #e2f4ea;
+  --bf-danger-bg: #fbe5e8;
+  /* placa escura */
+  --bf-night: #0e1b25;
+  --bf-night-2: #162a3a;
+  --bf-night-line: #27404f;
+  --bf-night-text: #eaf1f4;
+  --bf-night-muted: #8fa6b4;
+  --bf-flare: #ff7566;       /* vermelho legível sobre a placa escura */
+  --bf-pole-red: #d2372b;
+  --bf-pole-white: #f6f8f8;
+  --bf-pole-blue: #2a5da8;
+  /* séries dos gráficos (paleta validada: separação para daltonismo e contraste) */
+  --c1: #2a5da8; --c2: #e08a00; --c3: #0a9d8c; --c4: #d2372b; --c5: #8250c4; --c6: #5a8a1e;
+}
+
+@theme {
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
 }
 
 @theme inline {
@@ -25,15 +49,27 @@
   --color-surface: var(--bf-surface);
   --color-surface-2: var(--bf-surface-2);
   --color-line: var(--bf-border);
+  --color-line-strong: var(--bf-border-strong);
   --color-ink: var(--bf-text);
   --color-muted: var(--bf-muted);
   --color-accent: var(--bf-accent);
+  --color-accent-hover: var(--bf-accent-hover);
   --color-accent-ink: var(--bf-accent-ink);
+  --color-blue: var(--bf-blue);
   --color-success: var(--bf-success);
   --color-warn: var(--bf-warn);
   --color-danger: var(--bf-danger);
-  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --color-warn-bg: var(--bf-warn-bg);
+  --color-success-bg: var(--bf-success-bg);
+  --color-danger-bg: var(--bf-danger-bg);
+  --color-night: var(--bf-night);
+  --color-night-2: var(--bf-night-2);
+  --color-night-line: var(--bf-night-line);
+  --color-night-ink: var(--bf-night-text);
+  --color-night-muted: var(--bf-night-muted);
+  --color-flare: var(--bf-flare);
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-head), "Arial Narrow", system-ui, sans-serif;
 }
 
 body {
@@ -41,32 +77,86 @@ body {
   color: var(--bf-text);
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.font-display { font-family: var(--font-display); font-optical-sizing: auto; letter-spacing: -0.01em; }
+::selection { background: var(--bf-accent); color: #fff; }
 
-:focus-visible { outline: 2px solid var(--bf-accent); outline-offset: 2px; }
+/* Letreiro da placa: grotesca condensada e pesada. Números ficam grandes e firmes. */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 80%;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
 
-/* Faixa do poste: marca, item ativo e carregamento */
+:focus-visible { outline: 2px solid var(--bf-blue); outline-offset: 2px; border-radius: 4px; }
+
+/* Campos: um só visual para todos os formulários */
+input:not([type="checkbox"], [type="radio"], [type="hidden"]), select, textarea {
+  background: var(--bf-surface-2);
+  border-color: var(--bf-border);
+  transition: border-color .15s, background-color .15s, box-shadow .15s;
+}
+input:not([type="checkbox"], [type="radio"], [type="hidden"]):hover, select:hover, textarea:hover { border-color: var(--bf-border-strong); }
+input:not([type="checkbox"], [type="radio"], [type="hidden"]):focus, select:focus, textarea:focus {
+  background: var(--bf-surface); border-color: var(--bf-blue); outline: none; box-shadow: 0 0 0 3px rgb(42 93 168 / .18);
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--bf-accent); }
+
+/* Poste de barbeiro: marca, item ativo e carregamento */
 .pole {
-  background: repeating-linear-gradient(135deg, var(--bf-pole-red) 0 6px, #edede6 6px 12px, var(--bf-pole-blue) 12px 18px, #edede6 18px 24px);
-  background-size: 34px 34px;
+  background: repeating-linear-gradient(135deg, var(--bf-pole-red) 0 7px, var(--bf-pole-white) 7px 14px, var(--bf-pole-blue) 14px 21px, var(--bf-pole-white) 21px 28px);
+  background-size: 40px 40px;
 }
 .pole-animate { animation: pole-move 1.2s linear infinite; }
-@keyframes pole-move { to { background-position: 34px 0; } }
+@keyframes pole-move { to { background-position: 40px 0; } }
+
+/* Azulejo hexagonal: textura de fundo (variante para o escuro e para o claro) */
+.hex-dark {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 97px;
+}
+.hex-light {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%230e1b25' stroke-opacity='.06' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 97px;
+}
+
+/* Comanda: cartão de horário com picotado entre o horário e os dados */
+.comanda-wrap { filter: drop-shadow(0 1px 0 var(--bf-border)) drop-shadow(0 10px 18px rgb(14 27 37 / .08)); }
+.comanda {
+  --stub: 5.25rem;
+  background: var(--bf-surface);
+  border-radius: 1rem;
+  -webkit-mask:
+    radial-gradient(circle 9px at var(--stub) 0, #0000 97%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at var(--stub) 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle 9px at var(--stub) 0, #0000 97%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at var(--stub) 100%, #0000 97%, #000) bottom / 100% 51% no-repeat;
+}
+.comanda-stub { width: var(--stub); }
+.perf { background-image: linear-gradient(to bottom, var(--bf-border-strong) 50%, transparent 0); background-size: 2px 8px; background-repeat: repeat-y; }
 
 /* Painéis laterais (drawer) */
 dialog.drawer {
   margin: 0 0 0 auto; height: 100dvh; max-height: none; width: min(30rem, 100vw);
   background: var(--bf-surface); color: var(--bf-text);
   border: 0; border-left: 1px solid var(--bf-border); padding: 0;
+  box-shadow: -24px 0 48px rgb(14 27 37 / .18);
 }
 dialog.drawer[open] { animation: drawer-in .22s ease-out; }
-dialog.drawer::backdrop { background: rgb(5 9 7 / .6); backdrop-filter: blur(2px); }
+dialog.drawer::backdrop { background: rgb(14 27 37 / .55); backdrop-filter: blur(2px); }
 @keyframes drawer-in { from { transform: translateX(24px); opacity: 0; } }
 
 .toast-in { animation: toast-in .25s ease-out; }
 @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } }
+
+/* Entrada única da tela de abertura da LP */
+.rise { animation: rise .6s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes rise { from { transform: translateY(14px); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

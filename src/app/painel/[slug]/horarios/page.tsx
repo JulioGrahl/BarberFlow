@@ -35,7 +35,7 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
       <div className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">
         {[{ id: "", display_name: "Barbearia" }, ...(pros ?? [])].map((p) => (
           <Link key={p.id} href={p.id ? `/painel/${slug}/horarios?pro=${p.id}` : `/painel/${slug}/horarios`}
-            className={`rounded-md px-3 py-1.5 text-sm ${(current?.id ?? "") === p.id ? "bg-surface-2 text-accent" : "text-muted hover:text-ink"}`}>{p.display_name}</Link>
+            className={`rounded-md px-3 py-1.5 text-sm ${(current?.id ?? "") === p.id ? "bg-night font-medium text-white" : "text-muted hover:text-ink"}`}>{p.display_name}</Link>
         ))}
       </div>
       <ActionForm key={current?.id ?? "shop"} action={saveHours} submit="Salvar horários" className="max-w-3xl space-y-4">

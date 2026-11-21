@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { brl } from "@/lib/format";
+import { brl, nowISO, spParts } from "@/lib/format";
 import { waLink } from "@/lib/whatsapp";
 
 type Hour = { weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null };
@@ -35,68 +35,87 @@ export default async function ShopPage({ params }: Props) {
   const { shop, services, pros, hours } = data;
   const open = new Map(hours.map((h) => [h.weekday, h]));
   const wa = waLink(shop.phone, `Olá! Vim pela página da ${shop.name}.`);
+  const todayDow = new Date(`${spParts(nowISO()).ymd}T12:00:00Z`).getUTCDay();
+  const todayHours = open.get(todayDow);
   return (
     <div className="flex-1">
-      <div className="pole h-2 w-full" aria-hidden />
-      <main className="mx-auto w-full max-w-2xl px-5 pb-16 pt-12">
-        <p className="text-sm text-muted">Barbearia</p>
-        <h1 className="font-display mt-1 text-5xl leading-[1.05] sm:text-6xl">{shop.name}</h1>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={`/b/${shop.slug}/agendar`} className="rounded-lg bg-accent px-6 py-3 font-semibold text-accent-ink transition hover:brightness-110">Agendar horário</Link>
-          {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-line px-5 py-3 hover:bg-surface"><MessageCircle size={18} aria-hidden /> WhatsApp</a> : null}
+      <section className="hex-dark relative overflow-hidden bg-night text-night-ink">
+        <span className="pole absolute inset-x-0 bottom-0 h-2" aria-hidden />
+        <div className="mx-auto w-full max-w-4xl px-5 pb-14 pt-[max(1.5rem,env(safe-area-inset-top))] sm:pb-20">
+          <div className="flex items-center justify-between">
+            <span className="font-display text-lg text-night-muted">Barbearia</span>
+            <Link href="/login" className="rounded-lg border border-night-line px-3.5 py-2 text-sm hover:bg-night-2">Entrar</Link>
+          </div>
+          <h1 className="font-display rise mt-12 text-[3.6rem] leading-[0.9] sm:mt-16 sm:text-[6.5rem]">{shop.name}</h1>
+          {hours.length > 0 ? (
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-night-2 px-3.5 py-1.5 text-sm">
+              <span className={`size-2 rounded-full ${todayHours ? "bg-success" : "bg-night-muted"}`} aria-hidden />
+              {todayHours ? `Hoje: ${hm(todayHours.start_time)} às ${hm(todayHours.end_time)}` : "Fechado hoje"}
+            </p>
+          ) : null}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href={`/b/${shop.slug}/agendar`} className="min-h-13 rounded-xl bg-accent px-7 py-3.5 text-lg font-semibold text-white shadow-[0_8px_20px_rgb(210_55_43/.35)] transition hover:bg-accent-hover active:translate-y-px">Agendar horário</Link>
+            {wa ? <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-13 items-center gap-2 rounded-xl border border-night-line px-6 py-3.5 text-lg hover:bg-night-2"><MessageCircle size={20} aria-hidden /> WhatsApp</a> : null}
+          </div>
         </div>
+      </section>
 
-        {hours.length > 0 ? (
-          <>
-            <h2 className="font-display mt-14 text-2xl">Horário de funcionamento</h2>
-            <ul className="mt-2 divide-y divide-line text-sm">
-              {[1, 2, 3, 4, 5, 6, 0].map((d) => {
-                const h = open.get(d);
-                return (
-                  <li key={d} className="flex justify-between gap-4 py-2.5">
-                    <span>{DAYS[d]}</span>
-                    <span className={h ? "tabular-nums" : "text-muted"}>{h ? `${hm(h.start_time)} às ${hm(h.end_time)}${h.break_start && h.break_end ? ` · intervalo ${hm(h.break_start)} às ${hm(h.break_end)}` : ""}` : "Fechado"}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        ) : null}
-
-        <h2 className="font-display mt-14 text-2xl">Serviços</h2>
-        {services.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Esta barbearia ainda não cadastrou serviços.</p>
-        ) : (
-          <ul className="mt-2 divide-y divide-line">
-            {services.map((s) => (
-              <li key={s.id} className="flex items-baseline gap-3 py-4">
-                <span className="min-w-0">
-                  <span className="font-display text-xl">{s.name}</span>
-                  <span className="block text-xs text-muted">{s.duration_minutes} min{s.description ? ` · ${s.description}` : ""}</span>
-                </span>
-                <span className="mb-1.5 min-w-6 flex-1 self-end border-b border-dotted border-line" aria-hidden />
-                <span className="font-display text-xl">{brl(s.price_cents)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {pros.length > 0 ? (
-          <>
-            <h2 className="font-display mt-14 text-2xl">Quem atende</h2>
-            <ul className="mt-4 flex flex-wrap gap-3">
-              {pros.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 rounded-full border border-line bg-surface py-1.5 pl-1.5 pr-4">
-                  <span className="font-display flex size-9 items-center justify-center rounded-full bg-surface-2 text-accent">{p.display_name.slice(0, 1)}</span>
-                  <span className="text-sm">{p.display_name}</span>
+      <main className="mx-auto grid w-full max-w-4xl gap-8 px-5 py-12 md:grid-cols-[1.4fr_1fr] md:gap-12">
+        <section aria-label="Serviços e preços">
+          <h2 className="font-display text-4xl leading-none">Serviços</h2>
+          {services.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">Esta barbearia ainda não cadastrou serviços.</p>
+          ) : (
+            <ul className="hex-dark relative mt-5 overflow-hidden rounded-2xl bg-night px-5 py-2 text-night-ink">
+              {services.map((sv) => (
+                <li key={sv.id} className="flex items-baseline gap-3 border-b border-night-line py-4 last:border-0">
+                  <span className="min-w-0">
+                    <span className="font-display text-2xl leading-tight">{sv.name}</span>
+                    <span className="block text-xs text-night-muted">{sv.duration_minutes} min{sv.description ? ` · ${sv.description}` : ""}</span>
+                  </span>
+                  <span className="mb-1.5 min-w-6 flex-1 self-end border-b-2 border-dotted border-night-line" aria-hidden />
+                  <span className="font-display text-3xl leading-none text-flare">{brl(sv.price_cents)}</span>
                 </li>
               ))}
             </ul>
-          </>
-        ) : null}
+          )}
+        </section>
 
-        <p className="mt-16 text-xs text-muted">Para agendar você cria uma conta gratuita em menos de um minuto. <Link href="/login" className="underline hover:text-ink">Já tenho conta</Link></p>
+        <div className="space-y-10">
+          {hours.length > 0 ? (
+            <section aria-label="Horário de funcionamento">
+              <h2 className="font-display text-4xl leading-none">Horários</h2>
+              <ul className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface text-sm">
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                  const h = open.get(d);
+                  const now = d === todayDow;
+                  return (
+                    <li key={d} className={`flex justify-between gap-4 border-b border-line px-4 py-2.5 last:border-0 ${now ? "bg-night font-medium text-night-ink" : ""}`}>
+                      <span>{DAYS[d]}</span>
+                      <span className={`text-right ${h ? "" : now ? "text-night-muted" : "text-muted"}`}>{h ? `${hm(h.start_time)} às ${hm(h.end_time)}${h.break_start && h.break_end ? ` · pausa ${hm(h.break_start)} às ${hm(h.break_end)}` : ""}` : "Fechado"}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
+
+          {pros.length > 0 ? (
+            <section aria-label="Quem atende">
+              <h2 className="font-display text-4xl leading-none">Quem atende</h2>
+              <ul className="mt-5 flex flex-wrap gap-2.5">
+                {pros.map((p) => (
+                  <li key={p.id} className="flex items-center gap-2.5 rounded-full border border-line bg-surface py-1.5 pl-1.5 pr-4">
+                    <span className="font-display flex size-9 items-center justify-center rounded-full bg-night text-xl text-white">{p.display_name.slice(0, 1)}</span>
+                    <span className="text-sm font-medium">{p.display_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
       </main>
+      <p className="mx-auto w-full max-w-4xl px-5 pb-14 text-xs text-muted">Para agendar você cria uma conta gratuita em menos de um minuto. <Link href="/login" className="underline hover:text-ink">Já tenho conta</Link></p>
     </div>
   );
 }

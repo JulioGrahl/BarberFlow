@@ -67,7 +67,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                 <Drawer title={p.display_name} triggerClassName={`group flex w-full items-center gap-4 rounded-xl border border-line bg-surface p-4 text-left transition hover:border-accent/50 ${p.active ? "" : "opacity-50"}`}
                   trigger={
                     <>
-                      <span className="font-display flex size-12 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xl text-accent">{p.display_name.slice(0, 1)}</span>
+                      <span className="font-display flex size-12 shrink-0 items-center justify-center rounded-full bg-night text-xl text-white">{p.display_name.slice(0, 1)}</span>
                       <span className="min-w-0">
                         <span className="font-display block truncate text-lg">{p.display_name}</span>
                         <span className="block text-xs text-muted">{pct(p.id)}% de comissão · {n} {n === 1 ? "serviço" : "serviços"}</span>
@@ -84,7 +84,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                       <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={p.active} /> Ativo na agenda</label>
                     </ActionForm>
                     <div className="border-t border-line pt-5">
-                      <h3 className="font-display text-lg">Acesso ao sistema</h3>
+                      <h3 className="font-display text-2xl leading-tight">Acesso ao sistema</h3>
                       <p className="mb-3 text-xs text-muted">O barbeiro cria a própria conta pelo convite e passa a ver a agenda e os ganhos dele.</p>
                       {pending.map((i) => (
                         <form key={i.id} action={revokeInvite} className="mb-3 flex items-center justify-between gap-2 text-xs text-muted">

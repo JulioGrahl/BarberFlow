@@ -45,10 +45,10 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           <p className="text-sm text-muted">
             {preview.email ? `Entre ou crie sua conta com ${preview.email} para aceitar.` : "Entre ou crie sua conta para aceitar."}
           </p>
-          <Link href={`/cadastro${qs}`} className="block rounded-xl bg-accent px-4 py-2.5 text-center font-semibold text-accent-ink">
+          <Link href={`/cadastro${qs}`} className="block min-h-12 rounded-lg bg-accent px-4 py-3 text-center font-semibold text-white hover:bg-accent-hover">
             Criar conta e aceitar
           </Link>
-          <Link href={`/login${qs}`} className="block rounded-xl border border-line px-4 py-2.5 text-center font-semibold">
+          <Link href={`/login${qs}`} className="block min-h-12 rounded-lg border border-line-strong px-4 py-3 text-center font-semibold hover:bg-surface-2">
             Já tenho conta
           </Link>
         </div>

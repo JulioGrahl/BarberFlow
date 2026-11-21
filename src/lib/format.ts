@@ -15,11 +15,11 @@ export const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelada",
 };
 export const STATUS_TONE: Record<string, string> = {
-  active: "border-success/40 text-success",
-  pending: "border-warn/40 text-warn",
-  overdue: "border-danger/40 text-danger",
-  suspended: "border-danger/40 text-danger",
-  cancelled: "border-line text-muted",
+  active: "border-success/30 bg-success-bg text-success",
+  pending: "border-warn/30 bg-warn-bg text-warn",
+  overdue: "border-danger/30 bg-danger-bg text-danger",
+  suspended: "border-danger/30 bg-danger-bg text-danger",
+  cancelled: "border-line bg-surface-2 text-muted",
 };
 
 export const isoDateIn = (days: number) => new Date(Date.now() + days * 864e5).toISOString().slice(0, 10);

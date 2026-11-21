@@ -7,12 +7,12 @@ import type { MasterState } from "@/app/actions/master";
 import { FormMessage, SubmitButton } from "@/components/ui";
 import { useDrawer } from "@/components/drawer";
 
-export const inputCls = "w-full rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-base text-ink placeholder:text-muted/60";
+export const inputCls = "w-full rounded-lg border px-3.5 py-2.5 text-base text-ink placeholder:text-muted/60";
 
 export function L({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm text-muted">{label}</span>
+      <span className="text-sm font-medium">{label}</span>
       {children}
     </label>
   );
@@ -21,7 +21,7 @@ export function L({ label, children }: { label: string; children: ReactNode }) {
 function CopyLink({ url }: { url: string }) {
   const [ok, setOk] = useState(false);
   return (
-    <div className="space-y-2 rounded-xl border border-accent/40 bg-surface-2 p-3">
+    <div className="space-y-2 rounded-xl border border-blue/40 bg-surface-2 p-3">
       <p className="break-all text-sm">{url}</p>
       <button
         type="button"
@@ -66,7 +66,7 @@ export function ActionForm({
     <form action={run} className={className}>
       {children}
       <FormMessage error={state?.error} message={state?.inviteUrl ? state.message : undefined} />
-      {toast && typeof document !== "undefined" ? createPortal(<div role="status" className="toast-in fixed bottom-20 left-1/2 z-[100] -translate-x-1/2 rounded-lg border border-success/40 bg-surface-2 px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div>, document.body) : null}
+      {toast && typeof document !== "undefined" ? createPortal(<div role="status" className="toast-in fixed bottom-20 left-1/2 z-[100] -translate-x-1/2 rounded-lg border border-success/30 bg-success-bg px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div>, document.body) : null}
       {state?.inviteUrl ? <CopyLink url={state.inviteUrl} /> : null}
       <SubmitButton pendingText={pending}>{submit}</SubmitButton>
     </form>

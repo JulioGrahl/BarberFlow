@@ -13,7 +13,7 @@ export function WalkInButton({ slug, pros, date, time, className }: { slug: stri
   const services = pros.find((p) => p.id === proId)?.services ?? [];
   if (pros.length === 0) return null;
   return (
-    <Drawer title="Novo atendimento" triggerClassName={className ?? "inline-flex min-h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink hover:brightness-110"}
+    <Drawer title="Novo atendimento" triggerClassName={className ?? "inline-flex min-h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink hover:bg-accent-hover"}
       trigger={<><Plus size={17} aria-hidden /> Novo atendimento</>}>
       <p className="mb-4 text-sm text-muted">Para cliente que chegou na hora ou pediu por WhatsApp. Não precisa de conta. Se o WhatsApp já estiver cadastrado, o atendimento entra no mesmo cliente.</p>
       <ActionForm action={createWalkIn} submit="Agendar" pending="Agendando…">

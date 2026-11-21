@@ -61,12 +61,12 @@ export function AreaChart({ labels, series, fmt = "brl", tickEvery = 5 }: { labe
         {hover !== null ? (
           <g>
             <line x1={x(hover)} x2={x(hover)} y1={PT} y2={H - PB} stroke="var(--bf-muted)" strokeWidth="1" />
-            {series.map((s) => <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={s.color} stroke="var(--bf-surface)" strokeWidth="2" />)}
+            {series.map((s) => <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="4.5" fill={s.color} stroke="#fff" strokeWidth="2" />)}
           </g>
         ) : null}
       </svg>
       {hover !== null ? (
-        <div className="pointer-events-none absolute top-1 z-10 min-w-32 rounded-lg border border-line bg-surface-2 px-3 py-2 text-xs shadow-lg"
+        <div className="pointer-events-none absolute top-1 z-10 min-w-32 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-xl"
           style={{ left: `${(x(hover) / W) * 100}%`, transform: `translateX(${hover > n * 0.6 ? "-105%" : "8%"})` }}>
           <p className="mb-1 text-muted">{labels[hover]}</p>
           {series.map((s) => (
@@ -104,8 +104,8 @@ export function Heatmap({ rows, hours, rowLabels, unit }: { rows: number[][]; ho
                 <button key={i} type="button" aria-label={`${rowLabels[d]} ${hours[i]}h: ${v} ${unit}`}
                   onMouseEnter={() => setTip(`${rowLabels[d]}, ${hours[i]}h: ${v} ${unit}`)} onFocus={() => setTip(`${rowLabels[d]}, ${hours[i]}h: ${v} ${unit}`)}
                   onMouseLeave={() => setTip(null)} onBlur={() => setTip(null)}
-                  className="aspect-[1.3] rounded-[3px] outline-offset-1 hover:outline hover:outline-1 hover:outline-ink/70"
-                  style={{ background: v === 0 ? "var(--bf-surface-2)" : `color-mix(in srgb, #b98a2e ${Math.round(25 + (v / max) * 75)}%, var(--bf-surface-2))` }} />
+                  className="aspect-[1.3] rounded-[3px] outline-offset-1 hover:outline hover:outline-1 hover:outline-ink"
+                  style={{ background: v === 0 ? "var(--bf-surface-2)" : `color-mix(in srgb, var(--c1) ${Math.round(25 + (v / max) * 75)}%, var(--bf-surface-2))` }} />
               ))}
             </div>
           ))}

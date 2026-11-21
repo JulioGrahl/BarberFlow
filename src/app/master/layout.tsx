@@ -25,7 +25,7 @@ export default async function MasterLayout({ children }: { children: React.React
       <MasterNav />
       <div className="min-w-0 flex-1">
         {sessions.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center gap-3 border-b border-warn/40 bg-warn/10 px-4 py-2.5 text-sm text-warn">
+          <div key={s.id} className="flex flex-wrap items-center gap-3 border-b border-warn/30 bg-warn-bg px-4 py-2.5 text-sm text-warn">
             <ShieldAlert size={18} aria-hidden />
             <span className="flex-1">
               Modo suporte ativo em{" "}
@@ -36,7 +36,7 @@ export default async function MasterLayout({ children }: { children: React.React
             </span>
             <form action={closeSupport}>
               <input type="hidden" name="id" value={s.id} />
-              <button className="rounded-lg border border-warn/50 px-3 py-1 hover:bg-warn/10">Encerrar</button>
+              <button className="rounded-lg border border-warn/50 px-3 py-1 hover:bg-white/60">Encerrar</button>
             </form>
           </div>
         ))}

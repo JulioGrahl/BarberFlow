@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   return (
     <AuthCard title="Entrar" subtitle="Acesse sua conta para agendar ou gerenciar sua barbearia.">
       {first(sp.erro) === "confirmacao" ? (
-        <p role="alert" className="mb-4 rounded-lg border border-warn/40 px-3.5 py-2.5 text-sm text-warn">
+        <p role="alert" className="mb-4 rounded-lg border border-warn/30 bg-warn-bg px-3.5 py-2.5 text-sm text-warn">
           O link de confirmação é inválido ou expirou. Entre com sua senha ou crie a conta novamente.
         </p>
       ) : null}

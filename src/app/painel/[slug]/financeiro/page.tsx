@@ -161,7 +161,7 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
               {byPro.map((r) => (
                 <li key={r.name} className="flex items-center justify-between gap-3 py-2.5">
                   <span><span className="block">{r.name}</span><span className="text-xs text-muted">{brl(r.gross)} faturados · {r.pct}%</span></span>
-                  <span className="font-display text-lg">{brl(r.due)}</span>
+                  <span className="font-display text-2xl leading-tight">{brl(r.due)}</span>
                 </li>
               ))}
             </ul>

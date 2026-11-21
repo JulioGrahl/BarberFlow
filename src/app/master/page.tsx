@@ -44,7 +44,7 @@ export default async function MasterPage() {
   return (
     <>
       <PageHead title="Visão geral" sub="Mensalidades e saúde da base de barbearias"
-        actions={<Link href="/master/barbearias/nova" className="inline-flex items-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-ink hover:brightness-110"><Plus size={16} aria-hidden /> Nova barbearia</Link>} />
+        actions={<Link href="/master/barbearias/nova" className="inline-flex items-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-hover"><Plus size={16} aria-hidden /> Nova barbearia</Link>} />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Receita recorrente (mensal)" value={brl(mrr)} hero><span className="text-xs text-muted">Soma das mensalidades das assinaturas ativas</span></Stat>
         <Stat label="Recebido no mês" value={brl(s?.received_this_month_cents ?? 0)}><span className="text-xs text-muted">mensalidades e implantações</span></Stat>
@@ -66,7 +66,7 @@ export default async function MasterPage() {
             {upcoming.map((r) => (
               <li key={r.barbershops?.slug} className="flex items-center justify-between gap-3 py-3">
                 <span><Link className="font-medium hover:text-accent" href={`/master/barbearias/${r.barbershops?.slug}`}>{r.barbershops?.name}</Link><span className="block text-xs text-muted">vence em {dateBR(r.due_on)}</span></span>
-                <span className="flex items-center gap-3"><span className="font-display text-lg">{brl(r.price_cents)}</span><span className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_TONE[r.status]}`}>{STATUS_LABEL[r.status]}</span></span>
+                <span className="flex items-center gap-3"><span className="font-display text-2xl leading-tight">{brl(r.price_cents)}</span><span className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_TONE[r.status]}`}>{STATUS_LABEL[r.status]}</span></span>
               </li>
             ))}
           </ul>

@@ -26,7 +26,7 @@ export default async function ShopsPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHead title="Barbearias" sub={`${rows.length} ${rows.length === 1 ? "barbearia" : "barbearias"}`}
-        actions={<Link href="/master/barbearias/nova" className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-ink hover:brightness-110">Nova barbearia</Link>} />
+        actions={<Link href="/master/barbearias/nova" className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-ink hover:bg-accent-hover">Nova barbearia</Link>} />
       <form className="mt-5 flex flex-wrap gap-2">
         <input name="q" defaultValue={q} placeholder="Buscar por nome ou slug" className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-base" />
         <select name="status" defaultValue={status} className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-base">

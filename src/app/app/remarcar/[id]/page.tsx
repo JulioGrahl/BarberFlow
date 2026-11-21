@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicTop } from "@/components/public-shell";
 import { notFound, redirect } from "next/navigation";
 import * as z from "zod";
 import { rescheduleMyBooking } from "@/app/actions/booking";
@@ -37,33 +38,31 @@ export default async function ReschedulePage({ params, searchParams }: { params:
   const list = ((slots ?? []) as { starts_at: string }[]).map((s) => s.starts_at);
 
   return (
-    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8">
-      <Link href="/app" className="text-sm text-muted hover:text-ink">← Minha conta</Link>
-      <h1 className="font-display mt-3 text-4xl">Remarcar horário</h1>
-      <p className="mt-2 text-sm text-muted">{a.services?.name} com {a.professionals?.display_name} · {a.barbershops?.name}</p>
+    <div className="flex-1"><PublicTop wide title="Remarcar horário" kicker={a.barbershops?.name} back={{ href: "/app", label: "Minha conta" }} /><main className="mx-auto w-full max-w-5xl px-5 py-8 md:px-8">
+      <p className="text-sm text-muted">{a.services?.name} com {a.professionals?.display_name} · {a.barbershops?.name}</p>
       <p className="text-sm text-muted">Horário atual: <span className="text-ink">{fullDateTimeBR(a.starts_at)}</span></p>
 
       {tooLate ? (
-        <p role="alert" className="mt-6 rounded-lg border border-danger/40 px-4 py-3 text-sm text-danger">O prazo para remarcar já passou ({minH} h antes do horário). Fale com a barbearia.</p>
+        <p role="alert" className="mt-6 rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">O prazo para remarcar já passou ({minH} h antes do horário). Fale com a barbearia.</p>
       ) : (
         <>
           <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-8">
           <nav aria-label="Dia" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-4 lg:content-start lg:overflow-visible lg:px-0">
             {days.map((d) => (
               <Link key={d} href={`/app/remarcar/${id}?dia=${d}`} aria-current={d === day ? "date" : undefined}
-                className={`min-w-14 shrink-0 rounded-lg border px-2 py-2 text-center lg:min-w-0 ${d === day ? "border-accent bg-surface-2" : "border-line"}`}>
-                <span className="block text-xs text-muted">{weekdayShort(d)}</span><span className="font-display block text-xl leading-tight">{d.slice(8)}</span><span className="block text-[10px] text-muted">{dayMonth(d).slice(3)}</span>
+                className={`min-w-14 shrink-0 rounded-lg border px-2 py-2 text-center lg:min-w-0 ${d === day ? "border-night bg-night text-night-ink" : "border-line bg-surface hover:border-line-strong"}`}>
+                <span className={`block text-xs ${d === day ? "text-night-muted" : "text-muted"}`}>{weekdayShort(d)}</span><span className="font-display block text-2xl leading-tight">{d.slice(8)}</span><span className={`block text-[10px] ${d === day ? "text-night-muted" : "text-muted"}`}>{dayMonth(d).slice(3)}</span>
               </Link>
             ))}
           </nav>
           {list.length === 0 ? (
-            <p className="mt-4 self-start rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-muted lg:mt-0">Sem horários livres neste dia. Escolha outro dia.</p>
+            <p className="mt-4 self-start rounded-lg border border-dashed border-line-strong bg-surface px-4 py-6 text-center text-sm text-muted lg:mt-0">Sem horários livres neste dia. Escolha outro dia.</p>
           ) : (
             <form action={rescheduleMyBooking} className="mt-4 lg:mt-0">
               <input type="hidden" name="id" value={a.id} />
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
                 {list.map((iso) => (
-                  <button key={iso} name="at" value={iso} className="min-h-12 rounded-lg border border-line bg-surface text-base tabular-nums hover:border-accent hover:bg-surface-2">{timeBR(iso)}</button>
+                  <button key={iso} name="at" value={iso} className="font-display min-h-12 rounded-lg border border-line-strong bg-surface text-xl hover:border-night hover:bg-night hover:text-white">{timeBR(iso)}</button>
                 ))}
               </div>
               <p className="mt-3 text-xs text-muted">Ao tocar em um horário, o agendamento é remarcado na hora.</p>

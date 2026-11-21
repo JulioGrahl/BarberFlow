@@ -30,7 +30,7 @@ export default async function NewShopPage() {
           <L label="Primeiro vencimento"><input name="dueOn" type="date" required defaultValue={due} className={inputCls} /></L>
         </ActionForm>
       ) : (
-        <p className="mt-6 rounded-lg border border-warn/40 p-4 text-sm text-warn">
+        <p className="mt-6 rounded-lg border border-warn/30 bg-warn-bg p-4 text-sm text-warn">
           Cadastre ao menos um plano ativo em <Link className="underline" href="/master/planos">Planos</Link> antes de criar barbearias.
         </p>
       )}

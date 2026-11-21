@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PublicTop } from "@/components/public-shell";
 import { BookingFlow } from "@/components/booking-flow";
 import { createClient } from "@/lib/supabase/server";
 import { nextDays } from "@/lib/format";
@@ -22,14 +22,15 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
     serviceIds: (links.data ?? []).filter((l) => l.professional_id === p.id).map((l) => l.service_id),
   }));
   return (
-    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-2xl px-5 py-10">
-      <Link href={`/b/${slug}`} className="text-sm text-muted hover:text-ink">← {shop.name}</Link>
-      <h1 className="font-display mt-3 mb-8 text-4xl">Agendar horário</h1>
-      {(services.data ?? []).length === 0 || proList.length === 0 ? (
-        <p className="text-sm text-muted">Esta barbearia ainda não liberou agendamentos online.</p>
-      ) : (
-        <BookingFlow shop={shop.id} slug={slug} services={services.data ?? []} pros={proList} days={nextDays(14)} />
-      )}
-    </main></div>
+    <div className="flex-1">
+      <PublicTop title="Agendar horário" kicker={shop.name} back={{ href: `/b/${slug}`, label: "Voltar" }} />
+      <main className="mx-auto w-full max-w-2xl px-5 py-10">
+        {(services.data ?? []).length === 0 || proList.length === 0 ? (
+          <p className="text-sm text-muted">Esta barbearia ainda não liberou agendamentos online.</p>
+        ) : (
+          <BookingFlow shop={shop.id} slug={slug} services={services.data ?? []} pros={proList} days={nextDays(14)} />
+        )}
+      </main>
+    </div>
   );
 }

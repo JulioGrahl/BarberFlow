@@ -87,8 +87,8 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
             <input type="hidden" name="id" value={shop.id} />
             <fieldset className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface-2 p-1 text-sm">
               <legend className="sr-only">Tipo de pagamento</legend>
-              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-surface has-[:checked]:text-accent"><input type="radio" name="kind" value="monthly" defaultChecked className="sr-only" />Mensalidade</label>
-              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-surface has-[:checked]:text-accent"><input type="radio" name="kind" value="setup" className="sr-only" />Implantação</label>
+              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-night has-[:checked]:text-white"><input type="radio" name="kind" value="monthly" defaultChecked className="sr-only" />Mensalidade</label>
+              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-night has-[:checked]:text-white"><input type="radio" name="kind" value="setup" className="sr-only" />Implantação</label>
             </fieldset>
             <p className="text-xs text-muted">Mensalidade ativa a assinatura e empurra o vencimento em 1 mês. Implantação é um valor único e não mexe no vencimento.</p>
             <div className="grid grid-cols-2 gap-3">

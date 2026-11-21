@@ -10,14 +10,14 @@ type Service = { id: string; name: string; price_cents: number; duration_minutes
 type Pro = { id: string; name: string; serviceIds: string[] };
 
 const chip = (on: boolean) =>
-  `rounded-lg border px-3.5 py-2.5 text-sm transition ${on ? "border-accent bg-surface-2 text-accent" : "border-line bg-surface hover:bg-surface-2"}`;
+  `rounded-xl border px-4 py-3 text-sm transition active:scale-[.985] ${on ? "border-night bg-night text-night-ink" : "border-line-strong bg-surface hover:border-night"}`;
 
 function Step({ n, title, done, children }: { n: number; title: string; done?: string; children: React.ReactNode }) {
   return (
     <section className="grid grid-cols-[2rem_1fr] gap-x-4">
-      <span className={`font-display flex size-8 items-center justify-center rounded-full border text-sm ${done ? "border-accent bg-accent text-accent-ink" : "border-line text-muted"}`}>{done ? <Check size={16} aria-hidden /> : n}</span>
-      <div className="min-w-0 pb-8">
-        <h2 className="font-display text-xl leading-8">{title}{done ? <span className="ml-3 font-sans text-sm text-muted">{done}</span> : null}</h2>
+      <span className={`font-display flex size-9 items-center justify-center rounded-full text-lg ${done ? "bg-accent text-white" : "border-2 border-night text-ink"}`}>{done ? <Check size={17} aria-hidden /> : n}</span>
+      <div className="min-w-0 pb-9">
+        <h2 className="font-display text-3xl leading-9">{title}{done ? <span className="ml-3 font-sans text-sm font-normal text-muted">{done}</span> : null}</h2>
         <div className="mt-3">{children}</div>
       </div>
     </section>
@@ -50,8 +50,8 @@ export function BookingFlow({ shop, slug, services, pros, days }: { shop: string
         <div className="grid gap-2">
           {services.map((s) => (
             <button key={s.id} type="button" onClick={() => { setService(s.id); setPro(undefined); setDay(undefined); load(); }} className={`flex items-center justify-between text-left ${chip(service === s.id)}`}>
-              <span>{s.name} <span className="text-muted">· {s.duration_minutes} min</span></span>
-              <span className="font-display text-lg">{brl(s.price_cents)}</span>
+              <span><span className="text-base font-medium">{s.name}</span> <span className={service === s.id ? "text-night-muted" : "text-muted"}>· {s.duration_minutes} min</span></span>
+              <span className="font-display text-2xl leading-none">{brl(s.price_cents)}</span>
             </button>
           ))}
         </div>
@@ -71,10 +71,10 @@ export function BookingFlow({ shop, slug, services, pros, days }: { shop: string
         <Step n={3} title="Dia" done={day ? `${weekdayShort(day)} ${dayMonth(day)}` : undefined}>
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {days.map((d) => (
-              <button key={d} type="button" onClick={() => { setDay(d); load(service, pro, d); }} className={`${chip(day === d)} min-w-14 shrink-0 text-center`}>
-                <span className="block text-xs text-muted">{weekdayShort(d)}</span>
-                <span className="font-display text-lg">{dayMonth(d).slice(0, 2)}</span>
-                <span className="block text-[10px] text-muted">{dayMonth(d).slice(3)}</span>
+              <button key={d} type="button" onClick={() => { setDay(d); load(service, pro, d); }} className={`${chip(day === d)} min-w-16 shrink-0 px-2 text-center`}>
+                <span className={`block text-xs ${day === d ? "text-night-muted" : "text-muted"}`}>{weekdayShort(d)}</span>
+                <span className="font-display text-3xl leading-tight">{dayMonth(d).slice(0, 2)}</span>
+                <span className={`block text-[10px] ${day === d ? "text-night-muted" : "text-muted"}`}>{dayMonth(d).slice(3)}</span>
               </button>
             ))}
           </div>
@@ -87,15 +87,15 @@ export function BookingFlow({ shop, slug, services, pros, days }: { shop: string
             <p className="text-sm text-muted">Sem horários livres neste dia. Escolha outro dia acima.</p>
           ) : (
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {slots.map((s) => <button key={s.iso} type="button" onClick={() => setAt(s.iso)} className={`${chip(at === s.iso)} text-center tabular-nums`}>{s.label}</button>)}
+              {slots.map((s) => <button key={s.iso} type="button" onClick={() => setAt(s.iso)} className={`${chip(at === s.iso)} font-display px-0 text-center text-xl`}>{s.label}</button>)}
             </div>
           )}
         </Step>
       ) : null}
 
       {href ? (
-        <div className="sticky bottom-4 rounded-xl border border-line bg-surface/95 p-3 shadow-xl backdrop-blur">
-          <Link href={href} className="block rounded-lg bg-accent px-4 py-3 text-center font-semibold text-accent-ink hover:brightness-110">
+        <div className="sticky bottom-[max(1rem,env(safe-area-inset-bottom))] rounded-2xl bg-night p-2.5 shadow-[0_12px_32px_rgb(14_27_37/.35)]">
+          <Link href={href} className="block min-h-12 rounded-xl bg-accent px-4 py-3 text-center font-semibold text-white hover:bg-accent-hover">
             Continuar · {sv?.name}, {picked?.label}
           </Link>
         </div>
