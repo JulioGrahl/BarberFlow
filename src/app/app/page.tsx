@@ -60,7 +60,7 @@ export default async function CustomerArea({ searchParams }: { searchParams: Pro
           <p className="text-muted">{brl(r.price_cents)}{r.status === "scheduled" ? "" : ` · ${STATUS[r.status]}`}</p>
         </div>
         {cancellable ? (
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-start">
             <Link href={`/app/remarcar/${r.id}`} className="rounded-lg border border-line-strong px-3 py-1.5 text-center hover:bg-surface-2">Remarcar</Link>
             <form action={cancelMyBooking}>
               <input type="hidden" name="id" value={r.id} />

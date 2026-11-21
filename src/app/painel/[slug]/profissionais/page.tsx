@@ -14,13 +14,15 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const { barbershop } = await requireShopAccess(slug, ["owner"]);
   const supabase = await createClient();
-  const [pros, services, links, commissions, invites] = await Promise.all([
+  const [pros, services, links, commissions, invites, access] = await Promise.all([
     supabase.from("professionals").select("id, display_name, active").eq("barbershop_id", barbershop.id).order("display_name"),
     supabase.from("services").select("id, name").eq("barbershop_id", barbershop.id).eq("active", true).order("name"),
     supabase.from("professional_services").select("professional_id, service_id").eq("barbershop_id", barbershop.id),
     supabase.from("professional_commissions").select("professional_id, percent").eq("barbershop_id", barbershop.id),
     supabase.from("invitations").select("id, professional_id, email, expires_at").eq("barbershop_id", barbershop.id).eq("role", "barber").is("accepted_at", null).is("revoked_at", null).gt("expires_at", nowISO()),
+    supabase.rpc("professionals_with_access", { p_shop: barbershop.id }),
   ]);
+  const withAccess = new Set((access.data ?? []) as string[]);
   const svc = services.data ?? [];
   const linked = (pid: string) => new Set((links.data ?? []).filter((l) => l.professional_id === pid).map((l) => l.service_id));
   const pct = (pid: string) => String((commissions.data ?? []).find((c) => c.professional_id === pid)?.percent ?? 0).replace(".", ",");
@@ -60,7 +62,8 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
       {list.length === 0 ? <Empty>Nenhum profissional ainda. Adicione o primeiro para abrir a agenda.</Empty> : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((p) => {
-            const pending = (invites.data ?? []).filter((i) => i.professional_id === p.id);
+            const hasAccess = withAccess.has(p.id);
+            const pending = hasAccess ? [] : (invites.data ?? []).filter((i) => i.professional_id === p.id);
             const n = linked(p.id).size;
             return (
               <li key={p.id}>
@@ -71,7 +74,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                       <span className="min-w-0">
                         <span className="font-display block truncate text-lg">{p.display_name}</span>
                         <span className="block text-xs text-muted">{pct(p.id)}% de comissão · {n} {n === 1 ? "serviço" : "serviços"}</span>
-                        {pending.length ? <span className="mt-1 block text-xs text-warn">convite pendente</span> : null}
+                        {hasAccess ? <span className="mt-1 block text-xs text-success">acesso ativo</span> : pending.length ? <span className="mt-1 block text-xs text-warn">convite pendente</span> : null}
                       </span>
                     </>
                   }>
@@ -85,7 +88,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                     </ActionForm>
                     <div className="border-t border-line pt-5">
                       <h3 className="font-display text-2xl leading-tight">Acesso ao sistema</h3>
-                      <p className="mb-3 text-xs text-muted">O barbeiro cria a própria conta pelo convite e passa a ver a agenda e os ganhos dele.</p>
+                      <p className="mb-3 text-xs text-muted">{hasAccess ? "Este barbeiro já entrou no sistema e vê a própria agenda e os próprios ganhos." : "O barbeiro cria a própria conta pelo convite e passa a ver a agenda e os ganhos dele."}</p>
                       {pending.map((i) => (
                         <form key={i.id} action={revokeInvite} className="mb-3 flex items-center justify-between gap-2 text-xs text-muted">
                           <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={i.id} />
@@ -93,10 +96,12 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                           <button className="rounded-md border border-line px-2.5 py-1 hover:bg-surface-2">Revogar</button>
                         </form>
                       ))}
+                      {hasAccess ? null : (
                       <ActionForm action={inviteBarber} submit="Gerar convite" className="space-y-3">
                         <input type="hidden" name="slug" value={slug} /><input type="hidden" name="professional" value={p.id} />
                         <L label="E-mail do barbeiro (opcional)"><input name="email" type="email" className={inputCls} /></L>
                       </ActionForm>
+                      )}
                     </div>
                   </div>
                 </Drawer>
