@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Agendamento e gestão para barbearias.",
   applicationName: "BarberFlow",
   appleWebApp: { capable: true, title: "BarberFlow", statusBarStyle: "black-translucent" },
-  icons: { icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/apple-touch-icon.png" },
+  icons: { apple: "/apple-touch-icon.png" }, // favicon: src/app/icon.svg e favicon.ico (convenção do Next)
 };
 
 export const viewport: Viewport = {
