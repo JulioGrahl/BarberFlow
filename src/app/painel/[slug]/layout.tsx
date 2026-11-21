@@ -11,7 +11,12 @@ export default async function ShopLayout({ children, params }: { children: React
   const access = await requireShopAccess(slug);
   const supabase = await createClient();
   // Acesso bloqueado pelo BarberFlow (mensalidade em atraso ou contrato encerrado): aviso claro em vez de painel vazio.
-  const { data: block } = await supabase.rpc("my_shop_block_info", { p_slug: slug });
+  // As duas consultas não dependem uma da outra: rodam juntas (o aviso de pendentes só é usado se não estiver bloqueada).
+  const [{ data: block }, { count }] = await Promise.all([
+    supabase.rpc("my_shop_block_info", { p_slug: slug }),
+    supabase.from("appointments").select("id", { count: "exact", head: true })
+      .eq("barbershop_id", access.barbershop.id).eq("status", "scheduled").lt("ends_at", nowISO()),
+  ]);
   const blockInfo = ((block ?? []) as { status: string; note: string | null }[])[0];
   if (blockInfo) {
     return (
@@ -28,9 +33,7 @@ export default async function ShopLayout({ children, params }: { children: React
       </main>
     );
   }
-  // atendimentos cujo horário já passou e ainda não foram concluídos nem marcados como falta
-  const { count } = await supabase.from("appointments").select("id", { count: "exact", head: true })
-    .eq("barbershop_id", access.barbershop.id).eq("status", "scheduled").lt("ends_at", nowISO());
+  // count = atendimentos cujo horário já passou e ainda não foram concluídos nem marcados como falta
   return (
     <div className="flex min-h-full flex-1 flex-col md:flex-row">
       <ShopNav slug={slug} owner={access.role === "owner"} name={access.barbershop.name} pending={count ?? 0} />

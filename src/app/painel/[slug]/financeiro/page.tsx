@@ -36,10 +36,24 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
   const prevFrom = monthRange(shiftMonth(mes, -1)).from;
   const supabase = await createClient();
   // A RLS decide o que cada papel enxerga: dono vê tudo; barbeiro só as receitas dos próprios atendimentos.
-  const { data } = await supabase
+  // Todas as consultas da tela saem juntas (antes eram 3 ondas em sequência); cada papel dispara só as suas.
+  const fromISO = new Date(`${from}T00:00:00-03:00`).toISOString(), toISO = new Date(`${to}T00:00:00-03:00`).toISOString();
+  const txQuery = Promise.resolve(supabase
     .from("transactions")
     .select("id, type, category, amount_cents, description, occurred_on, appointment_id, professional_id")
-    .eq("barbershop_id", barbershop.id).gte("occurred_on", prevFrom).lt("occurred_on", to).order("occurred_on", { ascending: false });
+    .eq("barbershop_id", barbershop.id).gte("occurred_on", prevFrom).lt("occurred_on", to).order("occurred_on", { ascending: false }));
+  const barberQuery = role === "barber" ? Promise.all([
+    Promise.resolve(supabase.from("professional_commissions").select("percent").eq("barbershop_id", barbershop.id).maybeSingle()),
+    Promise.resolve(supabase.from("appointments").select("customer_id, customers(full_name)")
+      .eq("barbershop_id", barbershop.id).eq("status", "completed").gte("starts_at", fromISO).lt("starts_at", toISO)),
+  ]) : null;
+  const ownerQuery = role === "barber" ? null : Promise.all([
+    Promise.resolve(supabase.from("professionals").select("id, display_name").eq("barbershop_id", barbershop.id).order("display_name")),
+    Promise.resolve(supabase.from("professional_commissions").select("professional_id, percent").eq("barbershop_id", barbershop.id)),
+    Promise.resolve(supabase.from("appointments").select("price_cents")
+      .eq("barbershop_id", barbershop.id).eq("status", "no_show").gte("starts_at", fromISO).lt("starts_at", toISO)),
+  ]);
+  const { data } = await txQuery;
   const all = (data ?? []) as Tx[];
   const tx = all.filter((t) => t.occurred_on >= from);
   const prevTx = all.filter((t) => t.occurred_on < from);
@@ -64,12 +78,8 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
   );
 
   if (role === "barber") {
-    const { data: comm } = await supabase.from("professional_commissions").select("percent").eq("barbershop_id", barbershop.id).maybeSingle();
+    const [{ data: comm }, { data: appts }] = await barberQuery!;
     const percent = Number(comm?.percent ?? 0);
-    const { data: appts } = await supabase
-      .from("appointments").select("customer_id, customers(full_name)")
-      .eq("barbershop_id", barbershop.id).eq("status", "completed")
-      .gte("starts_at", new Date(`${from}T00:00:00-03:00`).toISOString()).lt("starts_at", new Date(`${to}T00:00:00-03:00`).toISOString());
     const rows = (appts ?? []) as unknown as { customer_id: string; customers: { full_name: string } | null }[];
     const visits = new Map<string, { name: string; n: number }>();
     for (const r of rows) { const v = visits.get(r.customer_id) ?? { name: r.customers?.full_name ?? "Cliente", n: 0 }; v.n++; visits.set(r.customer_id, v); }
@@ -95,10 +105,7 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
     );
   }
 
-  const [{ data: pros }, { data: comms }] = await Promise.all([
-    supabase.from("professionals").select("id, display_name").eq("barbershop_id", barbershop.id).order("display_name"),
-    supabase.from("professional_commissions").select("professional_id, percent").eq("barbershop_id", barbershop.id),
-  ]);
+  const [{ data: pros }, { data: comms }, { data: nsData }] = await ownerQuery!;
   const byPro = (pros ?? []).map((p) => {
     const gross = tx.filter((t) => t.type === "income" && t.professional_id === p.id).reduce((a, t) => a + t.amount_cents, 0);
     const pct = Number((comms ?? []).find((c) => c.professional_id === p.id)?.percent ?? 0);
@@ -109,9 +116,6 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
   for (const t of tx) if (t.type === "expense") cats.set(t.category, (cats.get(t.category) ?? 0) + t.amount_cents);
   const catItems = [...cats.entries()].sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value, text: brl(value) }));
   const profit = income - expense;
-  const { data: nsData } = await supabase.from("appointments").select("price_cents")
-    .eq("barbershop_id", barbershop.id).eq("status", "no_show")
-    .gte("starts_at", new Date(`${from}T00:00:00-03:00`).toISOString()).lt("starts_at", new Date(`${to}T00:00:00-03:00`).toISOString());
   const noShowCents = (nsData ?? []).reduce((a, x) => a + x.price_cents, 0);
 
   return (

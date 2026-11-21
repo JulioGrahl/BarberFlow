@@ -22,10 +22,17 @@ export type ShopMembership = {
 // Camada de acesso a dados (DAL): toda decisão de acesso nas páginas passa por aqui.
 // A proteção real continua sendo a RLS; isto só decide o que mostrar e para onde redirecionar.
 
-export const getUser = cache(async () => {
+export type SessionUser = { id: string; email: string | undefined };
+
+// getClaims() confere assinatura e validade do token localmente (chaves ES256 do projeto, em cache), sem ida e volta ao Supabase.
+// Antes era getUser(), que consulta o servidor de autenticação a cada página. A RLS do banco já confia no mesmo token,
+// então a proteção dos dados não muda; a única diferença é que um logout em outro aparelho vale só no fim da validade do token (1 h).
+export const getUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser(); // valida o token no servidor do Supabase
-  return data.user;
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return null;
+  return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : undefined };
 });
 
 export const getProfile = cache(async (): Promise<Profile | null> => {
