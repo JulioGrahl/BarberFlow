@@ -28,22 +28,25 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
   const rest = items.filter((i) => !main.includes(i));
   const isActive = (href: string, exact?: boolean) => (exact ? path === href : path.startsWith(href));
 
-  const side = (on: boolean) => `relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${on ? "bg-night-2 font-medium text-white" : "text-night-muted hover:bg-night-2/60 hover:text-night-ink"}`;
+  const side = (on: boolean) => `relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${on ? "bg-night-2 font-semibold text-white shadow-[inset_3px_0_0_var(--bf-blue)]" : "text-night-muted hover:bg-night-2/60 hover:text-night-ink"}`;
 
   return (
     <>
       {/* Desktop: placa escura com o poste na borda */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-night px-3 py-5 pl-5 text-night-ink md:flex">
-        <div className="mb-8 px-3">
-          <p className="font-display truncate text-2xl leading-tight">{name}</p>
-          <p className="mt-0.5 text-xs text-night-muted">{owner ? "Proprietário" : "Barbeiro"}</p>
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-night px-3 py-5 text-night-ink md:flex">
+        <div className="mb-8 flex items-center gap-3 px-3">
+          <span className="pole h-9 w-1.5 shrink-0 rounded-full" aria-hidden />
+          <div className="min-w-0">
+            <p className="font-display truncate text-xl leading-tight">{name}</p>
+            <p className="mt-0.5 text-xs text-night-muted">{owner ? "Proprietário" : "Barbeiro"}</p>
+          </div>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5">
           {items.map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} className={side(active)}>
-                <Icon size={18} aria-hidden className={active ? "text-flare" : ""} /> {label}
+                <Icon size={18} aria-hidden className={active ? "text-white" : ""} /> {label}
                 {exact && pending > 0 ? <span className="ml-auto rounded-full bg-danger px-1.5 text-xs font-semibold text-white" aria-label={`${pending} para fechar`}>{pending}</span> : null}
               </Link>
             );

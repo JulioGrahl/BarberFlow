@@ -114,14 +114,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--bf-accent); }
 @keyframes pole-move { to { background-position: 40px 0; } }
 
 /* Azulejo hexagonal: textura de fundo (variante para o escuro e para o claro) */
-.hex-dark {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.035' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 56px 97px;
-}
-.hex-light {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%230e1b25' stroke-opacity='.06' stroke-width='1.2'%3E%3Cpath d='M28 2 54 17v30L28 62 2 47V17zM28 62v33M2 47 28 62l26-15'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 56px 97px;
-}
+.hex-dark { background-image: none; }
+.hex-light { background-image: none; }
 
 /* Comanda: cartão de horário com picotado entre o horário e os dados */
 .comanda-wrap { filter: drop-shadow(0 1px 0 var(--bf-border)) drop-shadow(0 10px 18px rgb(14 27 37 / .08)); }
