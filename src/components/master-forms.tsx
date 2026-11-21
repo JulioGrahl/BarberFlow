@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import type { MasterState } from "@/app/actions/master";
 import { FormMessage, SubmitButton } from "@/components/ui";
+import { useDrawer } from "@/components/drawer";
 
-export const inputCls = "w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-base text-ink placeholder:text-muted/60";
+export const inputCls = "w-full rounded-lg border border-line bg-surface-2 px-3.5 py-2.5 text-base text-ink placeholder:text-muted/60";
 
 export function L({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -51,10 +52,20 @@ export function ActionForm({
   className?: string;
 }) {
   const [state, run] = useActionState<MasterState, FormData>(action, undefined);
+  const drawer = useDrawer();
+  const [seen, setSeen] = useState<MasterState>(undefined);
+  const toast = state?.message && !state.error && !state.inviteUrl && seen !== state ? state.message : null;
+  useEffect(() => {
+    if (!state?.message || state.error) return;
+    if (!state.inviteUrl) drawer?.close();
+    const t = setTimeout(() => setSeen(state), 3500);
+    return () => clearTimeout(t);
+  }, [state, drawer]);
   return (
     <form action={run} className={className}>
       {children}
-      <FormMessage error={state?.error} message={state?.message} />
+      <FormMessage error={state?.error} message={state?.inviteUrl ? state.message : undefined} />
+      {toast ? <div role="status" className="toast-in fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-success/40 bg-surface-2 px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div> : null}
       {state?.inviteUrl ? <CopyLink url={state.inviteUrl} /> : null}
       <SubmitButton pendingText={pending}>{submit}</SubmitButton>
     </form>

@@ -1,19 +1,23 @@
 @import "tailwindcss";
 
-/* Identidade BarberFlow: grafite e preto com acento dourado discreto (docs/DESIGN.md) */
+/* BarberFlow: verde-garrafa e latão, com o poste de barbeiro como assinatura. */
 :root {
   color-scheme: dark;
-  --bf-bg: #0b0b0d;
-  --bf-surface: #141417;
-  --bf-surface-2: #1b1b1f;
-  --bf-border: #26262b;
-  --bf-text: #ededed;
-  --bf-muted: #9a9aa2;
-  --bf-accent: #d4a63a;
+  --bf-bg: #0e1512;
+  --bf-surface: #141d19;
+  --bf-surface-2: #1b2621;
+  --bf-border: #2a3a33;
+  --bf-text: #eae6d8;
+  --bf-muted: #98a196;
+  --bf-accent: #c9a15b;
   --bf-accent-ink: #1a1405;
-  --bf-success: #3dbe7a;
-  --bf-warn: #e0953a;
-  --bf-danger: #e05555;
+  --bf-success: #6fbf8f;
+  --bf-warn: #e0a24a;
+  --bf-danger: #e0715f;
+  --bf-pole-red: #c8453b;
+  --bf-pole-blue: #3e6fb0;
+  /* séries dos gráficos (validadas contra a superfície) */
+  --c1: #b98a2e; --c2: #2e9e8e; --c3: #d4553f; --c4: #6c84e0; --c5: #869628; --c6: #b5619f;
 }
 
 @theme inline {
@@ -28,16 +32,42 @@
   --color-success: var(--bf-success);
   --color-warn: var(--bf-warn);
   --color-danger: var(--bf-danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 }
 
 body {
   background: var(--bf-bg);
   color: var(--bf-text);
   font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1;
 }
 
-:focus-visible {
-  outline: 2px solid var(--bf-accent);
-  outline-offset: 2px;
+.font-display { font-family: var(--font-display); font-optical-sizing: auto; letter-spacing: -0.01em; }
+
+:focus-visible { outline: 2px solid var(--bf-accent); outline-offset: 2px; }
+
+/* Faixa do poste: marca, item ativo e carregamento */
+.pole {
+  background: repeating-linear-gradient(135deg, var(--bf-pole-red) 0 6px, #edede6 6px 12px, var(--bf-pole-blue) 12px 18px, #edede6 18px 24px);
+  background-size: 34px 34px;
+}
+.pole-animate { animation: pole-move 1.2s linear infinite; }
+@keyframes pole-move { to { background-position: 34px 0; } }
+
+/* Painéis laterais (drawer) */
+dialog.drawer {
+  margin: 0 0 0 auto; height: 100dvh; max-height: none; width: min(30rem, 100vw);
+  background: var(--bf-surface); color: var(--bf-text);
+  border: 0; border-left: 1px solid var(--bf-border); padding: 0;
+}
+dialog.drawer[open] { animation: drawer-in .22s ease-out; }
+dialog.drawer::backdrop { background: rgb(5 9 7 / .6); backdrop-filter: blur(2px); }
+@keyframes drawer-in { from { transform: translateX(24px); opacity: 0; } }
+
+.toast-in { animation: toast-in .25s ease-out; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

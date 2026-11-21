@@ -45,3 +45,21 @@ export const fullDateTimeBR = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "full", timeStyle: "short" });
 
 export const nowISO = () => new Date().toISOString();
+
+// Datas de calendário (yyyy-mm-dd) no fuso de Brasília, n dias atrás (n=0 é hoje).
+export function daysAgo(n: number): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+  return fmt.format(new Date(Date.now() - n * 864e5));
+}
+// Dia (yyyy-mm-dd), dia da semana (0=dom) e hora de um instante, em Brasília (UTC-3 fixo).
+export function spParts(iso: string) {
+  const d = new Date(new Date(iso).getTime() - 3 * 3600e3);
+  return { ymd: d.toISOString().slice(0, 10), dow: d.getUTCDay(), hour: d.getUTCHours() };
+}
+export const spStartISO = (ymd: string) => new Date(`${ymd}T00:00:00-03:00`).toISOString();
+export const spHour = () => (new Date().getUTCHours() + 21) % 24;
+export const greeting = () => { const h = spHour(); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
+export const longDate = (ymd: string) =>
+  new Date(`${ymd}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+export const STATUS_APPT: Record<string, string> = { scheduled: "agendado", completed: "concluído", no_show: "faltou", cancelled: "cancelado" };
+export const nowMs = () => Date.now();

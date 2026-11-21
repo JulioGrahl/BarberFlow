@@ -6,12 +6,8 @@ export default async function ShopLayout({ children, params }: { children: React
   const access = await requireShopAccess(slug);
   return (
     <div className="flex min-h-full flex-1 flex-col md:flex-row">
-      <aside className="border-b border-line bg-surface p-3 md:w-60 md:border-b-0 md:border-r md:p-4">
-        <p className="truncate px-3 text-sm font-semibold tracking-wide text-accent">{access.barbershop.name}</p>
-        <p className="px-3 pb-3 text-xs text-muted md:pb-5">{access.role === "owner" ? "Proprietário" : "Barbeiro"}</p>
-        <ShopNav slug={slug} owner={access.role === "owner"} />
-      </aside>
-      <main className="mx-auto w-full min-w-0 max-w-5xl flex-1 px-4 py-8">{children}</main>
+      <ShopNav slug={slug} owner={access.role === "owner"} name={access.barbershop.name} />
+      <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-9">{children}</main>
     </div>
   );
 }
