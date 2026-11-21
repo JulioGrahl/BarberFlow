@@ -99,7 +99,7 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
         </Panel>
         <Panel title="Receita por dia" sub={`${dayMonth(days30[0])} a ${dayMonth(days30[29])}`} className="lg:col-span-3">
           {rev30 === 0 ? <Empty>A receita aparece aqui quando os atendimentos forem concluídos na agenda.</Empty> :
-            <AreaChart labels={days30.map((d) => `${weekdayShort(d)} ${dayMonth(d)}`)} series={[{ name: "Receita", color: "var(--c1)", values: daily.map((v) => v / 100) }]} format={(n) => brl(Math.round(n * 100))} tickEvery={6} />}
+            <AreaChart labels={days30.map((d) => `${weekdayShort(d)} ${dayMonth(d)}`)} series={[{ name: "Receita", color: "var(--c1)", values: daily.map((v) => v / 100) }]} tickEvery={6} />}
         </Panel>
       </div>
 

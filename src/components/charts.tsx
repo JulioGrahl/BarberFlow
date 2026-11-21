@@ -14,7 +14,8 @@ function niceMax(v: number) {
 }
 
 // Área/linha com mira e tooltip. Uma série = área preenchida; duas ou mais = linhas.
-export function AreaChart({ labels, series, format, tickEvery = 5 }: { labels: string[]; series: Series[]; format: (n: number) => string; tickEvery?: number }) {
+export function AreaChart({ labels, series, fmt = "brl", tickEvery = 5 }: { labels: string[]; series: Series[]; fmt?: "brl" | "num"; tickEvery?: number }) {
+  const format = (n: number) => (fmt === "brl" ? (n).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: n >= 100 ? 0 : 2 }) : String(Math.round(n)));
   const id = useId();
   const ref = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<number | null>(null);

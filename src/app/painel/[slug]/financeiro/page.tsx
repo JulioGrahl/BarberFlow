@@ -62,7 +62,6 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
       <Link href={`${base}?mes=${shiftMonth(mes, 1)}`} className={arrow} aria-label="Próximo mês"><ChevronRight size={18} /></Link>
     </div>
   );
-  const money = (n: number) => brl(Math.round(n * 100));
 
   if (role === "barber") {
     const { data: comm } = await supabase.from("professional_commissions").select("percent").eq("barbershop_id", barbershop.id).maybeSingle();
@@ -86,7 +85,7 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
         </div>
         <div className="mt-4 grid gap-4 lg:grid-cols-5">
           <Panel title="Faturamento por dia" className="lg:col-span-3">
-            {income === 0 ? <Empty>Nenhum atendimento concluído neste mês.</Empty> : <AreaChart labels={labels} series={[{ name: "Faturado", color: "var(--c1)", values: perDay("income") }]} format={money} />}
+            {income === 0 ? <Empty>Nenhum atendimento concluído neste mês.</Empty> : <AreaChart labels={labels} series={[{ name: "Faturado", color: "var(--c1)", values: perDay("income") }]} />}
           </Panel>
           <Panel title="Clientes mais frequentes" className="lg:col-span-2">
             {top.length === 0 ? <Empty>Sem atendimentos concluídos neste mês.</Empty> : <HBars items={top.map((c) => ({ label: c.name, value: c.n, text: `${c.n} ${c.n === 1 ? "vez" : "vezes"}` }))} color="var(--c2)" />}
@@ -140,7 +139,7 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Panel title="Receitas e despesas por dia" className="lg:col-span-3">
           {income + expense === 0 ? <Empty>Sem movimento neste mês.</Empty> :
-            <AreaChart labels={labels} series={[{ name: "Receitas", color: "var(--c1)", values: perDay("income") }, { name: "Despesas", color: "var(--c3)", values: perDay("expense") }]} format={money} />}
+            <AreaChart labels={labels} series={[{ name: "Receitas", color: "var(--c1)", values: perDay("income") }, { name: "Despesas", color: "var(--c3)", values: perDay("expense") }]} />}
         </Panel>
         <Panel title="Para onde vai o dinheiro" sub="Despesas por categoria" className="lg:col-span-2">
           {catItems.length === 0 ? <Empty>Nenhuma despesa lançada neste mês.</Empty> : <HBars items={catItems} color="var(--c3)" />}
