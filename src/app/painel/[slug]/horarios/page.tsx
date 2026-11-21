@@ -3,7 +3,7 @@ import Link from "next/link";
 import { addBlock, deleteBlock, saveHours } from "@/app/actions/shop";
 import { Plus } from "lucide-react";
 import { Drawer } from "@/components/drawer";
-import { ClearBreak } from "@/components/clear-break";
+import { DayHours } from "@/components/day-hours";
 import { ActionForm, inputCls, L } from "@/components/master-forms";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -27,7 +27,6 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
   const proName = new Map((pros ?? []).map((p) => [p.id, p.display_name]));
   const today = nextDays(1)[0];
   const byDay = new Map((rows ?? []).map((r) => [r.weekday, r]));
-  const time = "w-[7rem] rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-base";
 
   return (
     <>
@@ -44,23 +43,7 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
         <div className="divide-y divide-line rounded-xl border border-line bg-surface">
           {WEEKDAYS.map((name, d) => {
             const r = byDay.get(d);
-            return (
-              <div key={d} className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 has-[input[type=checkbox]:not(:checked)]:text-muted">
-                <label className="flex w-32 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name={`on_${d}`} defaultChecked={!!r} className="size-4 accent-[var(--bf-accent)]" /> {name}</label>
-                <div className="flex items-center gap-2 group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
-                  <input type="time" name={`start_${d}`} defaultValue={hm(r?.start_time) || "09:00"} className={time} aria-label={`${name}: abertura`} />
-                  <span className="text-muted">às</span>
-                  <input type="time" name={`end_${d}`} defaultValue={hm(r?.end_time) || "18:00"} className={time} aria-label={`${name}: fechamento`} />
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-sm group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
-                  <span className="text-muted">intervalo</span>
-                  <input type="time" name={`bs_${d}`} defaultValue={hm(r?.break_start)} className={time} aria-label={`${name}: início do intervalo`} />
-                  <span className="text-muted">–</span>
-                  <input type="time" name={`be_${d}`} defaultValue={hm(r?.break_end)} className={time} aria-label={`${name}: fim do intervalo`} />
-                  <ClearBreak day={d} />
-                </div>
-              </div>
-            );
+            return <DayHours key={d} day={d} name={name} initial={{ on: !!r, start: hm(r?.start_time) || "09:00", end: hm(r?.end_time) || "18:00", bs: hm(r?.break_start), be: hm(r?.break_end) }} />;
           })}
         </div>
       </ActionForm>
