@@ -14,7 +14,7 @@ export default async function NewShopPage() {
   return (
     <div className="max-w-xl">
       <Link href="/master/barbearias" className="text-sm text-muted hover:text-ink">← Barbearias</Link>
-      <h1 className="mt-2 text-2xl font-semibold">Nova Barbearia</h1>
+      <h1 className="font-display mt-2 text-4xl">Nova barbearia</h1>
       {plans?.length ? (
         <ActionForm action={createBarbershop} submit="Criar barbearia" pending="Criando..." className="mt-6 space-y-4">
           <L label="Nome da barbearia"><input name="name" required minLength={2} className={inputCls} /></L>
@@ -27,6 +27,7 @@ export default async function NewShopPage() {
               {plans.map((p) => <option key={p.id} value={p.id}>{p.name} — {brl(p.price_cents)}</option>)}
             </select>
           </L>
+          <L label="Valor da implantação (R$, cobrado uma vez)"><input name="setupFee" inputMode="decimal" defaultValue="1.000,00" className={inputCls} /></L>
           <L label="Primeiro vencimento"><input name="dueOn" type="date" required defaultValue={due} className={inputCls} /></L>
         </ActionForm>
       ) : (

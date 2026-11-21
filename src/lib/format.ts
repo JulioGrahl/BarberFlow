@@ -11,8 +11,8 @@ export const STATUS_LABEL: Record<string, string> = {
   active: "Ativa",
   pending: "Pendente",
   overdue: "Em atraso",
-  suspended: "Suspensa",
-  cancelled: "Cancelada",
+  suspended: "Bloqueada",
+  cancelled: "Encerrada",
 };
 export const STATUS_TONE: Record<string, string> = {
   active: "border-success/30 bg-success-bg text-success",
@@ -79,4 +79,13 @@ export function nextQuarter() {
   const d = new Date(Math.ceil((Date.now() - 3 * 3600e3) / 900e3) * 900e3);
   const iso = d.toISOString();
   return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
+}
+
+// Dias entre duas datas "YYYY-MM-DD" (positivo quando b é depois de a).
+export const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 864e5);
+
+// "hoje", "ontem" ou "há N dias" para um timestamp (fuso de São Paulo).
+export function relDay(iso: string): string {
+  const n = daysBetween(spParts(iso).ymd, daysAgo(0));
+  return n <= 0 ? "hoje" : n === 1 ? "ontem" : `há ${n} dias`;
 }

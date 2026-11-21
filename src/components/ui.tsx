@@ -41,13 +41,13 @@ export function Field({ label, id, ...props }: { label: string; id: string } & I
   );
 }
 
-export function SubmitButton({ children, pendingText = "Aguarde..." }: { children: ReactNode; pendingText?: string }) {
+export function SubmitButton({ children, pendingText = "Aguarde...", tone }: { children: ReactNode; pendingText?: string; tone?: "danger" | "ink" }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className="min-h-12 w-full rounded-lg bg-accent px-4 py-2.5 font-semibold text-accent-ink transition hover:bg-accent-hover active:translate-y-px disabled:opacity-60"
+      className={`min-h-12 w-full rounded-lg px-4 py-2.5 font-semibold text-white transition active:translate-y-px disabled:opacity-60 ${tone === "danger" ? "bg-danger hover:brightness-110" : tone === "ink" ? "bg-night hover:bg-night-2" : "bg-accent hover:bg-accent-hover"}`}
     >
       {pending ? pendingText : children}
     </button>

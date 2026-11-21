@@ -44,13 +44,14 @@ function CopyLink({ url }: { url: string }) {
 
 // Formulário genérico: recebe a server action e os campos como children.
 export function ActionForm({
-  action, children, submit, pending, className = "space-y-4",
+  action, children, submit, pending, className = "space-y-4", tone,
 }: {
   action: (prev: MasterState, fd: FormData) => Promise<MasterState>;
   children: ReactNode;
   submit: string;
   pending?: string;
   className?: string;
+  tone?: "danger" | "ink";
 }) {
   const [state, run] = useActionState<MasterState, FormData>(action, undefined);
   const drawer = useDrawer();
@@ -68,7 +69,7 @@ export function ActionForm({
       <FormMessage error={state?.error} message={state?.inviteUrl ? state.message : undefined} />
       {toast && typeof document !== "undefined" ? createPortal(<div role="status" className="toast-in fixed bottom-20 left-1/2 z-[100] -translate-x-1/2 rounded-lg border border-success/30 bg-success-bg px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div>, document.body) : null}
       {state?.inviteUrl ? <CopyLink url={state.inviteUrl} /> : null}
-      <SubmitButton pendingText={pending}>{submit}</SubmitButton>
+      <SubmitButton pendingText={pending} tone={tone}>{submit}</SubmitButton>
     </form>
   );
 }

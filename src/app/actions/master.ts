@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import * as z from "zod";
 import { requireSuperAdmin } from "@/lib/auth";
@@ -26,6 +27,9 @@ function friendly(message: string): string {
   if (message.includes("barbershops_slug_key") || message.includes("duplicate key")) return "Este endereço (slug) já está em uso.";
   if (message.includes("not_found")) return "Registro não encontrado.";
   if (message.includes("forbidden")) return "Acesso negado.";
+  if (message.includes("not_closed")) return "Só é possível excluir uma barbearia já encerrada.";
+  if (message.includes("confirm_mismatch")) return "O endereço digitado não confere. Nada foi excluído.";
+  if (message.includes("invalid_amount")) return "Informe um valor válido.";
   if (message.includes("check constraint") && message.includes("slug")) return "Slug inválido: use letras minúsculas, números e hífens (3 a 60).";
   return "Não foi possível concluir a operação. Verifique os dados e tente novamente.";
 }
@@ -39,6 +43,7 @@ const NewShop = z.object({
   phone: z.string(),
   planId: z.uuid("Escolha um plano."),
   dueOn: z.iso.date("Informe o vencimento."),
+  setupFee: z.string(),
 });
 
 export async function createBarbershop(_prev: MasterState, fd: FormData): Promise<MasterState> {
@@ -51,9 +56,12 @@ export async function createBarbershop(_prev: MasterState, fd: FormData): Promis
     phone: s(fd, "phone"),
     planId: s(fd, "planId"),
     dueOn: s(fd, "dueOn"),
+    setupFee: s(fd, "setupFee"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
+  const setupFee = d.setupFee ? toCents(d.setupFee) : 0;
+  if (!Number.isFinite(setupFee) || setupFee < 0) return { error: "Valor de implantação inválido." };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("admin_create_barbershop", {
     p_name: d.name,
@@ -64,6 +72,7 @@ export async function createBarbershop(_prev: MasterState, fd: FormData): Promis
     p_plan_id: d.planId,
     p_started_on: new Date().toISOString().slice(0, 10),
     p_due_on: d.dueOn,
+    p_setup_fee_cents: setupFee,
   });
   if (error) return { error: friendly(error.message) };
   const r = data as { barbershop_id: string; owner_invitation_token: string };
@@ -111,10 +120,36 @@ export async function setSubscriptionStatus(_prev: MasterState, fd: FormData): P
   const status = Status.safeParse(s(fd, "status"));
   if (!id.success || !status.success) return { error: "Dados inválidos." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("admin_set_subscription_status", { p_shop: id.data, p_status: status.data });
+  const note = s(fd, "note").slice(0, 300);
+  if (status.data === "suspended" && note.length < 3) return { error: "Informe o motivo do bloqueio (ex.: mensalidade em atraso)." };
+  const { error } = await supabase.rpc("admin_set_subscription_status", { p_shop: id.data, p_status: status.data, p_note: note || null });
   if (error) return { error: friendly(error.message) };
   revalidatePath("/master", "layout");
-  return { message: "Status da assinatura atualizado." };
+  return { message: { suspended: "Acesso bloqueado.", active: "Acesso reativado.", cancelled: "Contrato encerrado.", pending: "Marcada como pendente.", overdue: "Marcada em atraso." }[status.data] };
+}
+
+export async function setSetupFee(_prev: MasterState, fd: FormData): Promise<MasterState> {
+  await requireSuperAdmin();
+  const id = uuid.safeParse(s(fd, "id"));
+  const cents = toCents(s(fd, "amount") || "0");
+  if (!id.success || !Number.isFinite(cents) || cents < 0) return { error: "Informe um valor válido." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_set_setup_fee", { p_shop: id.data, p_cents: cents });
+  if (error) return { error: friendly(error.message) };
+  revalidatePath("/master", "layout");
+  return { message: "Valor da implantação atualizado." };
+}
+
+// Exclusão definitiva: só depois de encerrada e digitando o endereço. Apaga agenda, clientes e financeiro da barbearia.
+export async function deleteBarbershop(_prev: MasterState, fd: FormData): Promise<MasterState> {
+  await requireSuperAdmin();
+  const id = uuid.safeParse(s(fd, "id"));
+  if (!id.success) return { error: "Dados inválidos." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_delete_barbershop", { p_shop: id.data, p_confirm: s(fd, "confirm").toLowerCase() });
+  if (error) return { error: friendly(error.message) };
+  revalidatePath("/master", "layout");
+  redirect("/master/barbearias?excluida=1");
 }
 
 export async function registerPayment(_prev: MasterState, fd: FormData): Promise<MasterState> {
