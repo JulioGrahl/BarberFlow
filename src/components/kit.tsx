@@ -60,13 +60,13 @@ export function Stat({ label, value, children, hero = false }: { label: string; 
   return hero ? (
     <div className="hex-dark relative overflow-hidden rounded-2xl bg-night p-5 text-night-ink sm:col-span-2">
       <p className="text-base font-medium text-night-muted">{label}</p>
-      <p className="font-display mt-1.5 text-6xl leading-none">{value}</p>
+      <p className="font-display mt-1.5 text-5xl leading-none sm:text-6xl">{value}</p>
       {children ? <div className="mt-4 text-base text-night-muted [&_.text-muted]:text-night-muted [&_.text-xs]:text-sm">{children}</div> : null}
     </div>
   ) : (
     <div className="rounded-2xl border border-line bg-surface p-4">
       <p className="text-sm text-muted">{label}</p>
-      <p className="font-display mt-1.5 text-4xl leading-none">{value}</p>
+      <p className="font-display mt-1.5 text-3xl leading-none sm:text-4xl">{value}</p>
       {children ? <div className="mt-3">{children}</div> : null}
     </div>
   );

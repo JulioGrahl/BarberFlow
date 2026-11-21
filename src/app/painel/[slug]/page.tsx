@@ -132,11 +132,11 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
 
       <section aria-label="Resumo do dia" className="hex-dark relative mb-4 overflow-hidden rounded-2xl bg-night p-5 pt-6 text-night-ink">
         <p className="text-sm text-night-muted">{owner ? "Faturado hoje" : "Você faturou hoje"}</p>
-        <p className="font-display mt-1 text-7xl leading-none">{brl(earned)}</p>
-        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-night-line pt-4">
-          <div><p className="font-display text-3xl leading-none">{doneToday.length}</p><p className="mt-1 text-xs text-night-muted">atendidos</p></div>
-          <div><p className="font-display text-3xl leading-none">{open.length + overdue.filter((a) => spParts(a.starts_at).ymd === today).length}</p><p className="mt-1 text-xs text-night-muted">faltam</p></div>
-          <div><p className="font-display text-3xl leading-none">{brl(expected)}</p><p className="mt-1 text-xs text-night-muted">a receber</p></div>
+        <p className="font-display mt-1 text-5xl leading-none sm:text-7xl">{brl(earned)}</p>
+        <div className="mt-5 grid grid-cols-[auto_auto_minmax(0,1fr)] gap-x-5 border-t border-night-line pt-4 sm:gap-x-8">
+          <div><p className="font-display whitespace-nowrap text-2xl leading-none sm:text-3xl">{doneToday.length}</p><p className="mt-1 text-sm text-night-muted">atendidos</p></div>
+          <div><p className="font-display whitespace-nowrap text-2xl leading-none sm:text-3xl">{open.length + overdue.filter((a) => spParts(a.starts_at).ymd === today).length}</p><p className="mt-1 text-sm text-night-muted">faltam</p></div>
+          <div><p className="font-display whitespace-nowrap text-2xl leading-none sm:text-3xl">{brl(expected)}</p><p className="mt-1 text-sm text-night-muted">a receber</p></div>
         </div>
         {!owner && pct > 0 ? <p className="mt-4 rounded-lg bg-night-2 px-3 py-2 text-sm">Sua comissão de hoje: <strong className="font-semibold text-flare">{brl(Math.round((earned * pct) / 100))}</strong> <span className="text-night-muted">({String(pct).replace(".", ",")}%)</span></p> : null}
       </section>
@@ -173,7 +173,7 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
           {next ? (
             <section aria-label="Próximo cliente" className="comanda-wrap">
               <div className="comanda flex">
-                <div className="comanda-stub flex shrink-0 flex-col items-center justify-center bg-night px-1 py-6 text-center text-night-ink">
+                <div className="comanda-stub flex shrink-0 flex-col items-center justify-start bg-night px-1 py-5 text-center text-night-ink">
                   <span className="font-display text-3xl leading-none">{timeBR(next.starts_at)}</span>
                   <span className="mt-1.5 text-[11px] leading-tight text-night-muted">{relTime(next.starts_at)}</span>
                 </div>
