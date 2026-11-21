@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/bricolage-grotesque/standard.css";
+import "@fontsource-variable/archivo/wdth.css";
 import "@fontsource-variable/instrument-sans/index.css";
 import "./globals.css";
 
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full antialiased" style={{ ["--font-body" as string]: "'Instrument Sans Variable'", ["--font-head" as string]: "'Bricolage Grotesque Variable'" }}>
+    <html lang="pt-BR" className="h-full antialiased" style={{ ["--font-body" as string]: "'Instrument Sans Variable'", ["--font-head" as string]: "'Archivo Variable'" }}>
       <body className="min-h-full flex flex-col bg-bg text-ink">{children}</body>
     </html>
   );

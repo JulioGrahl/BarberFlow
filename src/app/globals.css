@@ -82,13 +82,12 @@ body {
 
 ::selection { background: var(--bf-accent); color: #fff; }
 
-/* Letreiro da placa: grotesca condensada e pesada. Números ficam grandes e firmes. */
+/* Títulos e números: grotesca seca, levemente condensada, sem arredondados. */
 .font-display {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-stretch: 80%;
-  font-optical-sizing: auto;
-  letter-spacing: -0.015em;
+  font-weight: 650;
+  font-stretch: 92%;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
