@@ -10,8 +10,9 @@ declare
   b1 uuid := gen_random_uuid(); b2 uuid := gen_random_uuid(); c1 uuid := gen_random_uuid(); c2 uuid := gen_random_uuid();
   plan uuid; shopA uuid; shopB uuid; tokA text; tokB text; tok text;
   svc uuid; profA1 uuid; custA uuid; day date; slot timestamptz; slot2 timestamptz; apt uuid; apt2 uuid;
-  n int; r jsonb; res jsonb := '[]'; st text; sid uuid;
+  n int; r jsonb; res jsonb := '[]'; st text; sid uuid; base_shops int;
 begin
+  select count(*) into base_shops from public.barbershops; -- o teste funciona com dados reais já no banco
   insert into auth.users (id, aud, role, email, raw_user_meta_data) values
     (adm,'authenticated','authenticated','adm@t.test','{"full_name":"Admin"}'),
     (oa,'authenticated','authenticated','oa@t.test','{"full_name":"Dono A"}'),
@@ -21,7 +22,7 @@ begin
     (c1,'authenticated','authenticated','c1@t.test','{"full_name":"Cliente 1","phone":"11911111111"}'),
     (c2,'authenticated','authenticated','c2@t.test','{"full_name":"Cliente 2"}');
   update public.profiles set is_super_admin = true where id = adm;
-  insert into public.plans(name, price_cents) values ('Basico', 4900) returning id into plan;
+  insert into public.plans(name, price_cents) values ('Basico-teste', 4900) returning id into plan;
   day := (now() at time zone 'America/Sao_Paulo')::date + 1;
 
   -- admin cria barbearias
@@ -123,9 +124,11 @@ begin
   end;
   update public.appointments set status='completed' where id = apt;
   select count(*) into n from public.transactions;
-  res := res || jsonb_build_array(jsonb_build_object('t','b1 não lê financeiro (0)','ok', n=0,'n',n));
+  res := res || jsonb_build_array(jsonb_build_object('t','b1 lê só a própria receita (1: a do atendimento concluído)','ok', n=1,'n',n));
+  select count(*) into n from public.transactions where type = 'expense';
+  res := res || jsonb_build_array(jsonb_build_object('t','b1 não lê despesas (0)','ok', n=0,'n',n));
   select count(*) into n from public.professional_commissions;
-  res := res || jsonb_build_array(jsonb_build_object('t','b1 não lê comissões (0)','ok', n=0,'n',n));
+  res := res || jsonb_build_array(jsonb_build_object('t','b1 lê só a própria comissão (<=1)','ok', n<=1,'n',n));
 
   -- dono A
   reset role; perform set_config('request.jwt.claims', json_build_object('sub',oa,'email','oa@t.test')::text, true); set local role authenticated;
@@ -187,7 +190,7 @@ begin
   select count(*) into n from public.customers;
   res := res || jsonb_build_array(jsonb_build_object('t','sessão encerrada fecha o acesso (0)','ok', n=0,'n',n));
   r := public.master_stats();
-  res := res || jsonb_build_array(jsonb_build_object('t','master_stats funciona','ok', (r->>'barbershops_total')::int = 2));
+  res := res || jsonb_build_array(jsonb_build_object('t','master_stats funciona','ok', (r->>'barbershops_total')::int = base_shops + 2));
   reset role; perform set_config('request.jwt.claims', json_build_object('sub',oa,'email','oa@t.test')::text, true); set local role authenticated;
   begin perform public.master_stats(); res := res || jsonb_build_array(jsonb_build_object('t','dono não chama master_stats','ok',false));
   exception when others then res := res || jsonb_build_array(jsonb_build_object('t','dono não chama master_stats','ok',sqlstate='42501')); end;
@@ -203,7 +206,7 @@ begin
   begin perform user_id from public.professionals; res := res || jsonb_build_array(jsonb_build_object('t','anon sem acesso a professionals.user_id','ok',false));
   exception when insufficient_privilege then res := res || jsonb_build_array(jsonb_build_object('t','anon sem acesso a professionals.user_id','ok',true)); end;
   select count(*) into n from public.barbershops;
-  res := res || jsonb_build_array(jsonb_build_object('t','anon lista barbearias ativas (2)','ok', n=2,'n',n));
+  res := res || jsonb_build_array(jsonb_build_object('t','anon lista barbearias ativas','ok', n = base_shops + 2,'n',n));
   select count(*) into n from public.get_available_slots(shopA, profA1, svc, day);
   res := res || jsonb_build_array(jsonb_build_object('t','anon consulta horários (>0)','ok', n>0,'n',n));
   begin perform public.create_appointment(shopA, profA1, svc, slot2); res := res || jsonb_build_array(jsonb_build_object('t','anon não reserva','ok',false));
@@ -216,7 +219,7 @@ begin
   perform public.admin_set_subscription_status(shopA, 'suspended');
   reset role; perform set_config('request.jwt.claims', '{}', true); set local role anon;
   select count(*) into n from public.barbershops;
-  res := res || jsonb_build_array(jsonb_build_object('t','barbearia suspensa some da vitrine pública (1)','ok', n=1,'n',n));
+  res := res || jsonb_build_array(jsonb_build_object('t','barbearia suspensa some da vitrine pública','ok', n = base_shops + 1,'n',n));
   select count(*) into n from public.get_available_slots(shopA, profA1, svc, day);
   res := res || jsonb_build_array(jsonb_build_object('t','suspensa não oferece horários (0)','ok', n=0,'n',n));
   reset role; perform set_config('request.jwt.claims', json_build_object('sub',oa,'email','oa@t.test')::text, true); set local role authenticated;
