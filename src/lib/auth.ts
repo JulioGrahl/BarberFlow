@@ -15,6 +15,7 @@ export type Profile = {
 
 export type ShopMembership = {
   role: Role;
+  support?: { sessionId: string; expiresAt: string };
   barbershop: { id: string; slug: string; name: string };
 };
 
@@ -81,6 +82,23 @@ export async function requireShopAccess(slug: string, roles: Role[] = ["owner", 
   await requireUser(`/painel/${slug}`);
   const memberships = await getMemberships();
   const found = memberships.find((m) => m.barbershop.slug === slug && roles.includes(m.role));
-  if (!found) notFound(); // não revela se a barbearia existe
-  return found;
+  if (found) return found;
+  // Super admin com acesso de suporte aberto (2h, auditado) entra com poderes de dono.
+  const profile = await getProfile();
+  if (profile?.is_super_admin && roles.includes("owner")) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("support_sessions")
+      .select("id, expires_at, barbershops!inner(id, slug, name)")
+      .eq("admin_id", profile.id)
+      .eq("barbershops.slug", slug)
+      .is("ended_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .limit(1);
+    const row = (data ?? [])[0] as unknown as { id: string; expires_at: string; barbershops: { id: string; slug: string; name: string } } | undefined;
+    if (row) {
+      return { role: "owner" as Role, barbershop: row.barbershops, support: { sessionId: row.id, expiresAt: row.expires_at } } as ShopMembership;
+    }
+  }
+  notFound(); // não revela se a barbearia existe
 }

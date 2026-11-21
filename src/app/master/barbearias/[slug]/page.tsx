@@ -231,6 +231,9 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
               <input type="hidden" name="id" value={shop.shop_id} />
               <L label="Motivo"><input name="reason" required minLength={5} className={inputCls} placeholder="Ex.: cliente reportou erro na agenda" /></L>
             </ActionForm>
+            {(sessions ?? []).some((s) => !s.ended_at && new Date(s.expires_at) > new Date()) && (
+              <Link href={`/painel/${shop.slug}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-ink">Abrir painel da barbearia</Link>
+            )}
             <ul className="mt-4 divide-y divide-line text-sm">
               {(sessions ?? []).length === 0 ? <li className="py-2 text-muted">Nenhuma sessão ainda.</li> : (sessions ?? []).map((s) => (
                 <li key={s.id} className="py-2">

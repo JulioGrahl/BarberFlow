@@ -1,6 +1,7 @@
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { nowISO } from "@/lib/format";
+import { dateTimeBR, nowISO } from "@/lib/format";
+import { closeSupport } from "@/app/actions/master";
 import { ShopNav } from "@/components/shop-nav";
 import { ShieldAlert } from "lucide-react";
 
@@ -31,7 +32,20 @@ export default async function ShopLayout({ children, params }: { children: React
   return (
     <div className="flex min-h-full flex-1 flex-col md:flex-row">
       <ShopNav slug={slug} owner={access.role === "owner"} name={access.barbershop.name} pending={count ?? 0} />
-      <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-9">{children}</main>
+      <div className="min-w-0 flex-1">
+        {access.support && (
+          <div className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-warn/30 bg-warn-bg px-4 py-2.5 text-sm text-warn">
+            <ShieldAlert size={18} aria-hidden />
+            <span className="flex-1">Modo suporte em {access.barbershop.name} até {dateTimeBR(access.support.expiresAt)}. Alterações feitas aqui valem de verdade.</span>
+            <a className="rounded-lg border border-warn/50 px-3 py-1 hover:bg-white/60" href={`/master/barbearias/${slug}`}>Voltar ao Master</a>
+            <form action={closeSupport}>
+              <input type="hidden" name="id" value={access.support.sessionId} />
+              <button className="rounded-lg border border-warn/50 px-3 py-1 hover:bg-white/60">Encerrar suporte</button>
+            </form>
+          </div>
+        )}
+        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-9">{children}</main>
+      </div>
     </div>
   );
 }
