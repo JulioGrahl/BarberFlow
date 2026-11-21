@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import * as z from "zod";
 import { ConfirmForm } from "@/components/confirm-form";
-import { requireUser } from "@/lib/auth";
+import { getProfile, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { brl, fullDateTimeBR } from "@/lib/format";
 
@@ -15,8 +15,9 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
   const q = z.object({ service: z.uuid(), pro: z.uuid(), at: z.string().refine((v) => !Number.isNaN(Date.parse(v))) }).safeParse(sp);
   if (!q.success) notFound();
   // Cadastro/login obrigatório para confirmar; volta exatamente para esta tela depois.
-  await requireUser(`/b/${slug}/agendar/confirmar?service=${q.data.service}&pro=${q.data.pro}&at=${encodeURIComponent(q.data.at)}`);
+  const user = await requireUser(`/b/${slug}/agendar/confirmar?service=${q.data.service}&pro=${q.data.pro}&at=${encodeURIComponent(q.data.at)}`);
 
+  const profile = await getProfile();
   const supabase = await createClient();
   const { data: shop } = await supabase.from("barbershops").select("id,name").eq("slug", slug).maybeSingle();
   if (!shop) notFound();
@@ -37,7 +38,11 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
         <div className="flex justify-between gap-4"><dt className="text-muted">Quando</dt><dd className="text-right">{fullDateTimeBR(q.data.at)}</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-muted">Valor</dt><dd className="font-semibold">{brl(svc.price_cents)}</dd></div>
       </dl>
-      <ConfirmForm slug={slug} shop={shop.id} service={q.data.service} pro={q.data.pro} at={q.data.at} />
+      <div className="mt-4 text-sm text-muted">
+        Agendando como <span className="text-ink">{user.email}</span>.{" "}
+        <form action="/auth/signout" method="post" className="inline"><button className="underline hover:text-ink">Não é você? Sair</button></form>
+      </div>
+      <ConfirmForm name={profile?.full_name ?? ""} phone={profile?.phone ?? ""} slug={slug} shop={shop.id} service={q.data.service} pro={q.data.pro} at={q.data.at} />
     </main></div>
   );
 }

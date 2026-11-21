@@ -33,8 +33,14 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   const parsed = Ids.safeParse({ shop: fd.get("shop"), pro: fd.get("pro"), service: fd.get("service") });
   const at = String(fd.get("at") ?? "");
   if (!parsed.success || Number.isNaN(Date.parse(at)) || !/^[a-z0-9-]+$/.test(slug)) return { error: "Dados do agendamento inválidos." };
-  await requireUser();
+  const user = await requireUser();
+  const name = String(fd.get("name") ?? "").trim();
+  const phone = String(fd.get("phone") ?? "").replace(/\D/g, "");
+  if (name.length < 2 || phone.length < 10 || phone.length > 13) return { error: "Informe seu nome e um WhatsApp com DDD." };
   const supabase = await createClient();
+  // Atualiza o próprio perfil (RLS: só full_name e phone, só do próprio usuário); o banco copia para o cadastro de cliente.
+  const { error: upErr } = await supabase.from("profiles").update({ full_name: name, phone }).eq("id", user.id);
+  if (upErr) return { error: "Não foi possível salvar seus dados. Tente novamente." };
   const { error } = await supabase.rpc("create_appointment", {
     p_shop: parsed.data.shop, p_professional: parsed.data.pro, p_service: parsed.data.service,
     p_starts_at: new Date(at).toISOString(), p_notes: null,

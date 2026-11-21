@@ -21,13 +21,18 @@ const ALERTS: Record<string, [string, boolean]> = {
 
 // Área do cliente: seus agendamentos e cancelamento (respeitando o prazo da barbearia).
 export default async function CustomerArea({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireUser("/app");
+  const user = await requireUser("/app");
   const sp = await searchParams;
   const profile = await getProfile();
   const supabase = await createClient();
-  const { data } = await supabase
+  // Somente os agendamentos feitos por esta pessoa como cliente. Filtro explícito, independente do papel
+  // (um dono ou barbeiro logado também só vê aqui os próprios horários; a agenda da equipe fica no painel).
+  const { data: mine } = await supabase.from("customers").select("id").eq("profile_id", user.id);
+  const ids = (mine ?? []).map((c) => c.id);
+  const { data } = ids.length === 0 ? { data: [] } : await supabase
     .from("appointments")
     .select("id, starts_at, status, price_cents, services(name), professionals(display_name), barbershops(name, slug)")
+    .in("customer_id", ids)
     .order("starts_at", { ascending: false })
     .limit(50);
   const rows = (data ?? []) as unknown as Row[];
