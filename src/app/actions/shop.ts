@@ -7,6 +7,7 @@ import * as z from "zod";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { MasterState } from "@/app/actions/master";
+import { normalizeSocial, SOCIAL_FIELDS } from "@/lib/social";
 
 // Ações do painel da barbearia. O dono é validado no servidor e a RLS garante o isolamento por barbearia.
 type State = MasterState;
@@ -386,6 +387,55 @@ export async function deleteProduct(fd: FormData): Promise<void> {
   const supabase = await createClient();
   const { data: old } = await supabase.from("products").select("photo_path").eq("id", id.data).eq("barbershop_id", shop.id).maybeSingle();
   const { error } = await supabase.from("products").delete().eq("id", id.data).eq("barbershop_id", shop.id);
+  if (!error) await dropImage(supabase, old?.photo_path);
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  revalidatePath(`/b/${shop.slug}`);
+}
+
+// ---------------------------------------------------------------- personalização da página pública
+export async function savePageSettings(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const mode = s(fd, "team_mode");
+  if (!["cards", "compact", "hidden"].includes(mode)) return fail();
+  const row: Record<string, string | boolean | null> = { team_mode: mode, show_gallery: fd.get("show_gallery") === "on", updated_at: new Date().toISOString() };
+  for (const f of SOCIAL_FIELDS) {
+    const v = normalizeSocial(f.key, s(fd, f.key));
+    if (v === null) return { error: `Link de ${f.label} inválido. Use o @ do perfil ou o endereço completo.` };
+    row[f.key] = v || null;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("shop_page_settings").upsert({ barbershop_id: shop.id, ...row });
+  if (error) return fail();
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  revalidatePath(`/b/${shop.slug}`);
+  return { message: "Página atualizada." };
+}
+
+export async function addGalleryImage(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const photo = fileOf(fd);
+  if (!photo) return { error: "Escolha uma foto." };
+  const caption = s(fd, "caption");
+  if (caption.length > 100) return { error: "A legenda pode ter até 100 letras." };
+  const supabase = await createClient();
+  const { count } = await supabase.from("gallery_images").select("id", { count: "exact", head: true }).eq("barbershop_id", shop.id);
+  if ((count ?? 0) >= 12) return { error: "O portfólio comporta até 12 fotos. Remova uma para adicionar outra." };
+  const path = await uploadImage(supabase, shop.id, "portfolio", photo);
+  if (!path) return { error: "A foto precisa ser JPG, PNG ou WebP com até 3 MB." };
+  const { error } = await supabase.from("gallery_images").insert({ barbershop_id: shop.id, photo_path: path, caption: caption || null });
+  if (error) { await dropImage(supabase, path); return fail(); }
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  revalidatePath(`/b/${shop.slug}`);
+  return { message: "Foto adicionada ao portfólio." };
+}
+
+export async function deleteGalleryImage(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  const { data: old } = await supabase.from("gallery_images").select("photo_path").eq("id", id.data).eq("barbershop_id", shop.id).maybeSingle();
+  const { error } = await supabase.from("gallery_images").delete().eq("id", id.data).eq("barbershop_id", shop.id);
   if (!error) await dropImage(supabase, old?.photo_path);
   revalidatePath(`/painel/${shop.slug}`, "layout");
   revalidatePath(`/b/${shop.slug}`);

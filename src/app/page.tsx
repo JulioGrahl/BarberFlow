@@ -32,7 +32,12 @@ export default async function Home() {
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
           <span className="flex items-center gap-2.5 font-display text-2xl"><span className="pole h-6 w-1.5 rounded-full" aria-hidden />BarberFlow</span>
           {home ? <Link href={home} className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-night hover:bg-night-ink">Abrir meu painel</Link>
-            : <Link href="/login" className="rounded-lg border border-night-line px-4 py-2.5 text-sm hover:bg-night-2">Entrar</Link>}
+            : (
+              <nav className="flex items-center gap-2" aria-label="Conta">
+                <Link href="/login" className="inline-flex min-h-11 items-center rounded-lg border border-night-line px-4 text-sm font-medium hover:bg-night-2">Entrar</Link>
+                <Link href="/cadastro" className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-night hover:bg-night-ink">Criar conta</Link>
+              </nav>
+            )}
         </header>
         <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-6 pb-24 pt-10 sm:px-10 lg:grid-cols-[1.2fr_1fr] lg:pb-32 lg:pt-16">
           <div className="rise">

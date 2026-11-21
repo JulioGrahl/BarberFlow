@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarCheck, Clock, Scissors, Users } from "lucide-react";
+import { CalendarCheck, Clock, Scissors, UserPlus, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { brl, nowISO, spParts } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { WhatsAppLink } from "@/components/kit";
 import { waLink } from "@/lib/whatsapp";
+import { getUser, resolveHome } from "@/lib/auth";
+import { GalleryCarousel } from "@/components/gallery-carousel";
+import { SocialIcon, SOCIAL_LABEL } from "@/components/social-icons";
+import type { SocialKey } from "@/lib/social";
 
 type Hour = { weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null };
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -17,13 +21,15 @@ async function loadShop(slug: string) {
   const supabase = await createClient();
   const { data: shop } = await supabase.from("barbershops").select("id,name,slug,phone").eq("slug", slug).maybeSingle();
   if (!shop) return null;
-  const [{ data: services }, { data: pros }, { data: hours }, { data: products }] = await Promise.all([
+  const [{ data: services }, { data: pros }, { data: hours }, { data: products }, { data: cfg }, { data: gallery }] = await Promise.all([
     supabase.from("services").select("id,name,description,price_cents,duration_minutes").eq("barbershop_id", shop.id).eq("active", true).order("price_cents"),
     supabase.from("professionals").select("id,display_name,photo_path").eq("barbershop_id", shop.id).eq("active", true).order("display_name"),
     supabase.rpc("get_public_hours", { p_shop: shop.id }),
     supabase.from("products").select("id,name,description,price_cents,photo_path").eq("barbershop_id", shop.id).eq("active", true).order("created_at", { ascending: false }).limit(24),
+    supabase.from("shop_page_settings").select("*").eq("barbershop_id", shop.id).maybeSingle(),
+    supabase.from("gallery_images").select("id,photo_path,caption").eq("barbershop_id", shop.id).order("created_at", { ascending: false }).limit(12),
   ]);
-  return { shop, services: services ?? [], pros: pros ?? [], hours: (hours ?? []) as Hour[], products: products ?? [] };
+  return { shop, services: services ?? [], pros: pros ?? [], hours: (hours ?? []) as Hour[], products: products ?? [], cfg: (cfg ?? {}) as Record<string, string | boolean | null>, gallery: gallery ?? [] };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -35,26 +41,49 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShopPage({ params }: Props) {
   const data = await loadShop((await params).slug);
   if (!data) notFound();
-  const { shop, services, pros, hours, products } = data;
+  const { shop, services, pros, hours, products, cfg, gallery } = data;
+  const user = await getUser();
+  const home = user ? await resolveHome() : null;
+  const teamMode = (cfg.team_mode as string) ?? "cards";
+  const showGallery = (cfg.show_gallery as boolean) ?? true;
+  const socials = (["instagram", "facebook", "tiktok", "youtube", "website", "maps"] as SocialKey[]).flatMap((k) => (typeof cfg[k] === "string" && cfg[k] ? [{ key: k, href: cfg[k] as string }] : []));
   const open = new Map(hours.map((h) => [h.weekday, h]));
   const wa = waLink(shop.phone, `Olá! Vim pela página da ${shop.name}.`);
   const todayDow = new Date(`${spParts(nowISO()).ymd}T12:00:00Z`).getUTCDay();
   const todayHours = open.get(todayDow);
   const book = `/b/${shop.slug}/agendar`;
   const cheapest = services[0]?.price_cents;
-  const faces = pros.filter((p) => p.photo_path).slice(0, 3);
+  const withPhoto = pros.filter((p) => p.photo_path);
+  const withoutPhoto = pros.filter((p) => !p.photo_path);
+
+  const Chip = ({ name, photo }: { name: string; photo: string | null }) => (
+    <li className="flex items-center gap-2.5 rounded-full border border-line bg-surface py-1.5 pl-1.5 pr-4">
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt="" loading="lazy" className="size-9 rounded-full object-cover" />
+      ) : <span className="font-display flex size-9 items-center justify-center rounded-full bg-night text-lg text-white">{name.slice(0, 1)}</span>}
+      <span className="text-sm font-medium">{name}</span>
+    </li>
+  );
 
   return (
     <div className="flex-1 pb-24 md:pb-0">
       {/* ---------- abertura */}
       <section className="relative overflow-hidden bg-night text-night-ink">
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))] md:grid-cols-[1.3fr_1fr] md:items-end md:pb-20">
+        <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
+          <span className="flex items-center gap-2.5 font-display text-lg text-night-muted"><span className="pole h-5 w-1.5 rounded-full" aria-hidden />Barbearia</span>
+          {home ? (
+            <Link href={home} className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-night hover:bg-night-ink">Minha conta</Link>
+          ) : (
+            <nav className="flex items-center gap-2" aria-label="Conta">
+              <Link href={`/login?next=${encodeURIComponent(`/b/${shop.slug}`)}`} className="inline-flex min-h-11 items-center rounded-lg border border-night-line px-4 text-sm font-medium hover:bg-night-2">Entrar</Link>
+              <Link href="/cadastro" className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-white px-4 text-sm font-semibold text-night hover:bg-night-ink"><UserPlus size={16} aria-hidden />Criar conta</Link>
+            </nav>
+          )}
+        </header>
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 pb-14 md:grid-cols-[1.4fr_1fr] md:items-end md:pb-16">
           <div>
-            <div className="flex items-center justify-between md:justify-start">
-              <span className="flex items-center gap-2.5 font-display text-lg text-night-muted"><span className="pole h-5 w-1.5 rounded-full" aria-hidden />Barbearia</span>
-              <Link href="/login" className="rounded-lg border border-night-line px-3.5 py-2 text-sm hover:bg-night-2 md:hidden">Entrar</Link>
-            </div>
-            <h1 className="font-display rise mt-12 text-[3.4rem] leading-[0.92] sm:text-[5.5rem] lg:text-[7rem]">{shop.name}</h1>
+            <h1 className="font-display rise mt-8 text-[3.2rem] leading-[0.92] sm:mt-12 sm:text-[5rem] lg:text-[6.25rem]">{shop.name}</h1>
             <div className="mt-6 flex flex-wrap items-center gap-2.5 text-sm">
               {hours.length > 0 ? (
                 <span className="inline-flex items-center gap-2 rounded-full bg-night-2 px-3.5 py-1.5">
@@ -64,86 +93,80 @@ export default async function ShopPage({ params }: Props) {
               ) : null}
               {services.length > 0 && cheapest != null ? <span className="rounded-full bg-night-2 px-3.5 py-1.5">Serviços a partir de {brl(cheapest)}</span> : null}
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link href={book} className="inline-flex min-h-13 items-center gap-2.5 rounded-xl bg-white px-7 py-3.5 text-lg font-semibold text-night transition hover:bg-night-ink active:translate-y-px"><CalendarCheck size={20} aria-hidden />Agendar horário</Link>
               {wa ? <WhatsAppLink href={wa} dark className="min-h-13 rounded-xl px-6 text-lg" /> : null}
             </div>
+            {socials.length > 0 ? (
+              <ul className="mt-5 flex flex-wrap gap-2" aria-label="Redes sociais">
+                {socials.map(({ key, href }) => (
+                  <li key={key}>
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-night-line px-3.5 text-sm hover:bg-night-2"><SocialIcon kind={key} />{SOCIAL_LABEL[key]}</a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
           <aside className="hidden md:block" aria-label="Resumo">
-            <div className="rounded-2xl border border-night-line bg-night-2 p-6">
-              {faces.length > 0 ? (
-                <div className="mb-5 flex -space-x-3">
-                  {faces.map((p) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={p.id} src={mediaUrl(p.photo_path)!} alt={p.display_name} className="size-16 rounded-full border-4 border-night-2 object-cover" />
-                  ))}
-                </div>
-              ) : null}
-              <ul className="space-y-4 text-sm">
-                <li className="flex items-center gap-3"><Scissors size={18} className="text-night-muted" aria-hidden /><span><strong className="font-display text-2xl">{services.length}</strong> <span className="text-night-muted">{services.length === 1 ? "serviço" : "serviços"}</span></span></li>
-                <li className="flex items-center gap-3"><Users size={18} className="text-night-muted" aria-hidden /><span><strong className="font-display text-2xl">{pros.length}</strong> <span className="text-night-muted">{pros.length === 1 ? "profissional" : "profissionais"}</span></span></li>
-                <li className="flex items-center gap-3"><Clock size={18} className="text-night-muted" aria-hidden /><span className="text-night-muted">Agendamento online, sem ligar</span></li>
-              </ul>
-              <Link href="/login" className="mt-6 block text-sm text-night-muted underline hover:text-white">Já tenho conta</Link>
-            </div>
+            <ul className="space-y-4 rounded-2xl border border-night-line bg-night-2 p-6 text-sm">
+              <li className="flex items-center gap-3"><Scissors size={18} className="text-night-muted" aria-hidden /><span><strong className="font-display text-2xl">{services.length}</strong> <span className="text-night-muted">{services.length === 1 ? "serviço" : "serviços"}</span></span></li>
+              <li className="flex items-center gap-3"><Users size={18} className="text-night-muted" aria-hidden /><span><strong className="font-display text-2xl">{pros.length}</strong> <span className="text-night-muted">{pros.length === 1 ? "profissional" : "profissionais"}</span></span></li>
+              <li className="flex items-center gap-3"><Clock size={18} className="text-night-muted" aria-hidden /><span className="text-night-muted">Agendamento online, sem ligar</span></li>
+            </ul>
           </aside>
         </div>
         <span className="pole absolute inset-x-0 bottom-0 h-1.5" aria-hidden />
       </section>
 
-      <main className="mx-auto w-full max-w-6xl space-y-16 px-5 py-14 md:space-y-20 md:py-20">
-        {/* ---------- equipe */}
-        {pros.length > 0 ? (
-          <section aria-labelledby="equipe">
-            <h2 id="equipe" className="font-display text-4xl leading-none sm:text-5xl">Quem atende</h2>
-            <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {pros.map((p) => (
-                <li key={p.id} className="group">
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-night-2">
-                    {p.photo_path ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={mediaUrl(p.photo_path)!} alt={p.display_name} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-[1.03]" />
-                    ) : (
-                      <div className="flex size-full items-center justify-center bg-night text-night-line"><span className="font-display text-[6rem] leading-none">{p.display_name.slice(0, 1)}</span></div>
-                    )}
-                  </div>
-                  <p className="font-display mt-3 text-2xl leading-tight">{p.display_name}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {/* ---------- serviços */}
-        <section aria-labelledby="servicos">
-          <div className="flex flex-wrap items-end justify-between gap-4">
+      <main className="mx-auto w-full max-w-6xl space-y-14 px-5 py-12 md:space-y-16 md:py-16">
+        {/* ---------- o que o cliente quer primeiro: preços e horários */}
+        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:gap-12">
+          <section aria-labelledby="servicos">
             <h2 id="servicos" className="font-display text-4xl leading-none sm:text-5xl">Serviços e preços</h2>
-            {services.length > 0 ? <Link href={book} className="inline-flex min-h-11 items-center rounded-lg bg-accent px-5 text-sm font-semibold text-accent-ink hover:bg-accent-hover">Agendar horário</Link> : null}
-          </div>
-          {services.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">Esta barbearia ainda não cadastrou serviços.</p>
-          ) : (
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {services.map((sv) => (
-                <li key={sv.id} className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-5">
-                  <div>
-                    <p className="font-display text-2xl leading-tight">{sv.name}</p>
-                    {sv.description ? <p className="mt-1.5 text-sm text-muted">{sv.description}</p> : null}
-                  </div>
-                  <div className="mt-6 flex items-end justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-muted"><Clock size={15} aria-hidden />{sv.duration_minutes} min</span>
-                    <span className="font-display text-3xl leading-none">{brl(sv.price_cents)}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+            {services.length === 0 ? (
+              <p className="mt-4 text-sm text-muted">Esta barbearia ainda não cadastrou serviços.</p>
+            ) : (
+              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                {services.map((sv) => (
+                  <li key={sv.id} className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-5">
+                    <div>
+                      <p className="font-display text-2xl leading-tight">{sv.name}</p>
+                      {sv.description ? <p className="mt-1.5 text-sm text-muted">{sv.description}</p> : null}
+                    </div>
+                    <div className="mt-5 flex items-end justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-sm text-muted"><Clock size={15} aria-hidden />{sv.duration_minutes} min</span>
+                      <span className="font-display text-3xl leading-none">{brl(sv.price_cents)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {services.length > 0 ? <Link href={book} className="mt-5 inline-flex min-h-12 items-center rounded-xl bg-accent px-6 font-semibold text-accent-ink hover:bg-accent-hover">Agendar horário</Link> : null}
+          </section>
+
+          {hours.length > 0 ? (
+            <section aria-labelledby="horarios">
+              <h2 id="horarios" className="font-display text-4xl leading-none sm:text-5xl">Horários</h2>
+              <ul className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface text-sm">
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                  const h = open.get(d);
+                  const now = d === todayDow;
+                  return (
+                    <li key={d} className={`flex justify-between gap-4 border-b border-line px-4 py-2.5 last:border-0 ${now ? "bg-night font-medium text-night-ink" : ""}`}>
+                      <span>{DAYS[d]}{now ? " · hoje" : ""}</span>
+                      <span className={`text-right tabular-nums ${h ? "" : now ? "text-night-muted" : "text-muted"}`}>{h ? `${hm(h.start_time)} às ${hm(h.end_time)}${h.break_start && h.break_end ? ` · pausa ${hm(h.break_start)} às ${hm(h.break_end)}` : ""}` : "Fechado"}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ) : null}
+        </div>
 
         {/* ---------- vitrine (só aparece se o dono cadastrou produtos) */}
         {products.length > 0 ? (
-          <section aria-labelledby="vitrine" className="-mx-5 bg-night px-5 py-14 text-night-ink sm:mx-0 sm:rounded-3xl sm:px-10">
+          <section aria-labelledby="vitrine" className="-mx-5 bg-night px-5 py-12 text-night-ink sm:mx-0 sm:rounded-3xl sm:px-10">
             <h2 id="vitrine" className="font-display text-4xl leading-none sm:text-5xl">Na barbearia</h2>
             <p className="mt-3 max-w-xl text-night-muted">Produtos que usamos e vendemos no balcão. Pergunte ao seu barbeiro no atendimento.</p>
             <ul className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -166,36 +189,44 @@ export default async function ShopPage({ params }: Props) {
           </section>
         ) : null}
 
-        {/* ---------- horários e contato */}
-        {hours.length > 0 ? (
-          <section aria-labelledby="horarios" className="grid gap-8 md:grid-cols-[1fr_1.2fr] md:gap-14">
-            <div>
-              <h2 id="horarios" className="font-display text-4xl leading-none sm:text-5xl">Horários</h2>
-              <p className="mt-3 text-muted">Escolha o dia e o profissional na hora de agendar. Só aparecem horários livres.</p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href={book} className="inline-flex min-h-12 items-center rounded-xl bg-accent px-6 font-semibold text-accent-ink hover:bg-accent-hover">Agendar horário</Link>
-                {wa ? <WhatsAppLink href={wa} className="min-h-12 rounded-xl px-5" /> : null}
-              </div>
+        {/* ---------- portfólio (opcional) */}
+        {showGallery && gallery.length > 0 ? (
+          <section aria-labelledby="portfolio">
+            <h2 id="portfolio" className="font-display text-4xl leading-none sm:text-5xl">Nossos trabalhos</h2>
+            <div className="mt-6">
+              <GalleryCarousel images={gallery.map((g) => ({ id: g.id, url: mediaUrl(g.photo_path)!, caption: g.caption }))} />
             </div>
-            <ul className="overflow-hidden rounded-2xl border border-line bg-surface">
-              {[1, 2, 3, 4, 5, 6, 0].map((d) => {
-                const h = open.get(d);
-                const now = d === todayDow;
-                return (
-                  <li key={d} className={`flex justify-between gap-4 border-b border-line px-5 py-3 last:border-0 ${now ? "bg-night font-medium text-night-ink" : ""}`}>
-                    <span>{DAYS[d]}{now ? " · hoje" : ""}</span>
-                    <span className={`text-right tabular-nums ${h ? "" : now ? "text-night-muted" : "text-muted"}`}>{h ? `${hm(h.start_time)} às ${hm(h.end_time)}${h.break_start && h.break_end ? ` · pausa ${hm(h.break_start)} às ${hm(h.break_end)}` : ""}` : "Fechado"}</span>
-                  </li>
-                );
-              })}
-            </ul>
+          </section>
+        ) : null}
+
+        {/* ---------- equipe: institucional, por último e proporcional ao que a barbearia tem */}
+        {pros.length > 0 && teamMode !== "hidden" ? (
+          <section aria-labelledby="equipe">
+            <h2 id="equipe" className="font-display text-3xl leading-none sm:text-4xl">Quem atende</h2>
+            {teamMode === "cards" && withPhoto.length > 0 ? (
+              <>
+                <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+                  {withPhoto.map((p) => (
+                    <li key={p.id}>
+                      <div className="aspect-[4/5] overflow-hidden rounded-xl bg-night-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={mediaUrl(p.photo_path)!} alt={p.display_name} loading="lazy" className="size-full object-cover" />
+                      </div>
+                      <p className="font-display mt-2 text-lg leading-tight">{p.display_name}</p>
+                    </li>
+                  ))}
+                </ul>
+                {withoutPhoto.length > 0 ? <ul className="mt-4 flex flex-wrap gap-2.5">{withoutPhoto.map((p) => <Chip key={p.id} name={p.display_name} photo={null} />)}</ul> : null}
+              </>
+            ) : (
+              <ul className="mt-5 flex flex-wrap gap-2.5">{pros.map((p) => <Chip key={p.id} name={p.display_name} photo={mediaUrl(p.photo_path)} />)}</ul>
+            )}
           </section>
         ) : null}
       </main>
 
       <footer className="border-t border-line px-5 py-8 text-center text-sm text-muted">
         <p>{shop.name} · agendamento por <span className="font-semibold text-ink">BarberFlow</span></p>
-        <p className="mt-1">Para agendar você cria uma conta gratuita em menos de um minuto. <Link href="/login" className="underline hover:text-ink">Já tenho conta</Link></p>
       </footer>
 
       {/* barra de ação fixa no celular */}
