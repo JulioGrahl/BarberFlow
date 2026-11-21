@@ -1,6 +1,6 @@
 // Esqueleto de carregamento: aparece na hora ao trocar de tela, enquanto o servidor monta a página de verdade.
 export function Bone({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-surface-2 motion-reduce:animate-none ${className}`} aria-hidden />;
+  return <div className={`animate-pulse rounded-xl bg-line/70 motion-reduce:animate-none ${className}`} aria-hidden />;
 }
 
 export function PageSkeleton() {
