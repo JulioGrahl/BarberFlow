@@ -4,6 +4,7 @@ import { cancelMyBooking } from "@/app/actions/booking";
 import { getProfile, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { brl, dayMonth, spParts, timeBR } from "@/lib/format";
+import { ProfileForm } from "@/components/profile-form";
 
 export const metadata: Metadata = { title: "Minha conta" };
 
@@ -15,7 +16,10 @@ const STATUS: Record<string, string> = { scheduled: "Agendado", completed: "Conc
 const ALERTS: Record<string, [string, boolean]> = {
   agendado: ["Agendamento confirmado!", false],
   cancelado: ["Agendamento cancelado.", false],
-  prazo: ["O prazo para cancelar este horário já passou. Fale com a barbearia.", true],
+  remarcado: ["Horário remarcado!", false],
+  prazo: ["O prazo para alterar este horário já passou. Fale com a barbearia.", true],
+  ocupado: ["Esse horário acabou de ser ocupado. Escolha outro.", true],
+  remarcacao: ["Não foi possível remarcar. Tente novamente.", true],
   cancelamento: ["Não foi possível cancelar. Tente novamente.", true],
 };
 
@@ -36,7 +40,7 @@ export default async function CustomerArea({ searchParams }: { searchParams: Pro
     .order("starts_at", { ascending: false })
     .limit(50);
   const rows = (data ?? []) as unknown as Row[];
-  const alertKey = (["agendado", "cancelado", "erro"] as const).map((k) => (sp[k] ? (k === "erro" ? sp.erro : k) : null)).find(Boolean);
+  const alertKey = (["agendado", "cancelado", "remarcado", "erro"] as const).map((k) => (sp[k] ? (k === "erro" ? sp.erro : k) : null)).find(Boolean);
   const alert = alertKey ? ALERTS[alertKey] : undefined;
   const upcoming = rows.filter((r) => r.status === "scheduled").reverse();
   const past = rows.filter((r) => r.status !== "scheduled");
@@ -55,10 +59,13 @@ export default async function CustomerArea({ searchParams }: { searchParams: Pro
           <p className="text-muted">{brl(r.price_cents)}{r.status === "scheduled" ? "" : ` · ${STATUS[r.status]}`}</p>
         </div>
         {cancellable ? (
-          <form action={cancelMyBooking}>
-            <input type="hidden" name="id" value={r.id} />
-            <button className="rounded-lg border border-line px-3 py-1.5 hover:bg-surface-2 hover:text-danger">Cancelar</button>
-          </form>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Link href={`/app/remarcar/${r.id}`} className="rounded-lg border border-line px-3 py-1.5 text-center hover:bg-surface-2">Remarcar</Link>
+            <form action={cancelMyBooking}>
+              <input type="hidden" name="id" value={r.id} />
+              <button className="w-full rounded-lg border border-line px-3 py-1.5 hover:bg-surface-2 hover:text-danger">Cancelar</button>
+            </form>
+          </div>
         ) : null}
       </li>
     );
@@ -90,6 +97,8 @@ export default async function CustomerArea({ searchParams }: { searchParams: Pro
           </>
         ) : null}
         {past.length > 0 ? (<><h2 className="font-display mt-10 mb-3 text-2xl">Histórico</h2><ul className="space-y-3">{past.map((r) => card(r, false))}</ul></>) : null}
+        <h2 className="font-display mt-10 mb-3 text-2xl">Meus dados</h2>
+        <ProfileForm name={profile?.full_name ?? ""} phone={profile?.phone ?? ""} email={user.email ?? ""} />
       </main>
     </div>
   );

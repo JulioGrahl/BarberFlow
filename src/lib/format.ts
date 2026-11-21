@@ -71,3 +71,12 @@ export function relTime(iso: string): string {
   if (Math.abs(m) < 1) return "agora";
   return m > 0 ? `em ${t(m)}` : `há ${t(-m)}`;
 }
+
+// Concluir/Faltou só valem depois do início do atendimento (tolerância de 15 min, igual ao banco).
+export const canClose = (startsAtIso: string) => new Date(startsAtIso).getTime() <= Date.now() + 15 * 60e3;
+// Próximo horário "redondo" (quarto de hora) em Brasília: { date: yyyy-mm-dd, time: HH:MM }.
+export function nextQuarter() {
+  const d = new Date(Math.ceil((Date.now() - 3 * 3600e3) / 900e3) * 900e3);
+  const iso = d.toISOString();
+  return { date: iso.slice(0, 10), time: iso.slice(11, 16) };
+}

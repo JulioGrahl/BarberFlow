@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { CalendarDays, Clock, Wallet, MessageCircle, LogOut, Scissors, Users, ExternalLink, Sun, ChartNoAxesCombined, Menu, X } from "lucide-react";
+import { CalendarDays, Clock, Wallet, MessageCircle, LogOut, Scissors, Users, ExternalLink, Sun, ChartNoAxesCombined, ContactRound, Menu, X } from "lucide-react";
 
 export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owner: boolean; name: string; pending?: number }) {
   const path = usePathname();
@@ -16,6 +16,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
     { href: `${base}/resumo`, label: owner ? "Resumo" : "Meu resumo", icon: ChartNoAxesCombined },
     ...(owner
       ? [
+          { href: `${base}/clientes`, label: "Clientes", icon: ContactRound },
           { href: `${base}/servicos`, label: "Serviços", icon: Scissors },
           { href: `${base}/profissionais`, label: "Equipe", icon: Users },
           { href: `${base}/horarios`, label: "Horários", icon: Clock },

@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, MessageCircle, Phone, TriangleAlert, UserX, X } from "lucide-react";
 import { setAppointmentStatus } from "@/app/actions/shop";
-import { requireShopAccess } from "@/lib/auth";
+import { getUser, requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { brl, dayMonth, daysAgo, greeting, longDate, nowISO, relTime, spParts, spStartISO, timeBR } from "@/lib/format";
+import { brl, canClose, dayMonth, daysAgo, greeting, longDate, nextQuarter, nowISO, relTime, spParts, spStartISO, timeBR } from "@/lib/format";
+import { loadFlags, loadStaffPros } from "@/lib/staff-data";
+import { RefreshButton } from "@/components/refresh-button";
+import { WalkInButton } from "@/components/walkin-form";
+import { RescheduleButton } from "@/components/reschedule-form";
 import { waLink } from "@/lib/whatsapp";
 import { Empty } from "@/components/kit";
 import { SubmitBtn } from "@/components/submit-btn";
@@ -12,14 +16,14 @@ import { SubmitBtn } from "@/components/submit-btn";
 export const metadata: Metadata = { title: "Hoje" };
 
 type Appt = {
-  id: string; starts_at: string; ends_at: string; status: string; price_cents: number;
+  id: string; starts_at: string; ends_at: string; status: string; price_cents: number; customer_id: string; service_id: string; professional_id: string;
   customers: { full_name: string; phone: string | null } | null;
   services: { name: string } | null;
   professionals: { display_name: string } | null;
 };
-const SELECT = "id, starts_at, ends_at, status, price_cents, customers(full_name, phone), services(name), professionals(display_name)";
+const SELECT = "id, starts_at, ends_at, status, price_cents, customer_id, service_id, professional_id, customers(full_name, phone), services(name), professionals(display_name)";
 
-function Actions({ slug, id, owner, size }: { slug: string; id: string; owner: boolean; size: "lg" | "sm" }) {
+function Actions({ slug, id, owner, size, started = true, resched }: { slug: string; id: string; owner: boolean; size: "lg" | "sm"; started?: boolean; resched?: React.ReactNode }) {
   const lg = size === "lg";
   const btn = `inline-flex items-center justify-center gap-2 rounded-xl font-medium ${lg ? "min-h-12 flex-1 px-4 text-base" : "min-h-11 flex-1 px-3 text-sm"}`;
   const items: [string, string, typeof Check, string][] = [
@@ -28,13 +32,15 @@ function Actions({ slug, id, owner, size }: { slug: string; id: string; owner: b
   ];
   return (
     <div className="flex flex-wrap gap-2">
-      {items.map(([st, label, Icon, cls]) => (
+      {!started ? <p className="w-full text-sm text-muted">Ainda não começou: Concluir e Faltou liberam perto do horário.</p> : null}
+      {resched}
+      {started ? items.map(([st, label, Icon, cls]) => (
         <form key={st} action={setAppointmentStatus} className="flex flex-1">
           <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={id} />
           <input type="hidden" name="status" value={st} /><input type="hidden" name="next" value={`/painel/${slug}`} />
           <SubmitBtn className={`${btn} ${cls} w-full`}><Icon size={lg ? 19 : 17} aria-hidden />{label}</SubmitBtn>
         </form>
-      ))}
+      )) : null}
       {owner ? (
         <form action={setAppointmentStatus}>
           <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={id} />
@@ -44,6 +50,11 @@ function Actions({ slug, id, owner, size }: { slug: string; id: string; owner: b
       ) : null}
     </div>
   );
+}
+
+function Flag({ f }: { f?: { no_shows: number; blocked: boolean } }) {
+  if (!f || (f.no_shows === 0 && !f.blocked)) return null;
+  return <p className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-warn/40 px-2 py-0.5 text-xs text-warn"><TriangleAlert size={12} aria-hidden />{f.no_shows > 0 ? `${f.no_shows} ${f.no_shows === 1 ? "falta" : "faltas"} em 90 dias` : ""}{f.no_shows > 0 && f.blocked ? " · " : ""}{f.blocked ? "agendamento online bloqueado" : ""}</p>;
 }
 
 function Contact({ a, shop }: { a: Appt; shop: string }) {
@@ -90,16 +101,31 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
   const expected = todayAll.filter((a) => a.status === "scheduled").reduce((s, a) => s + a.price_cents, 0);
   const pct = Number((comm.data as { percent: number } | null)?.percent ?? 0);
   const tomorrowList = (tm.data ?? []) as { starts_at: string }[];
+  const user = await getUser();
+  const [pros, flags] = await Promise.all([
+    loadStaffPros(supabase, barbershop.id, owner, user?.id ?? ""),
+    loadFlags(supabase, barbershop.id, [...overdue, ...open].map((a) => a.customer_id)),
+  ]);
+  const q = nextQuarter();
+  const resched = (a: Appt, cls?: string) => {
+    const p = spParts(a.starts_at);
+    return <RescheduleButton slug={slug} id={a.id} date={p.ymd} time={timeBR(a.starts_at)} who={a.customers?.full_name ?? "Cliente"} proId={a.professional_id}
+      pros={owner ? pros.filter((x) => x.services.some((sv) => sv.id === a.service_id)).map((x) => ({ id: x.id, name: x.name })) : undefined} className={cls} />;
+  };
 
   const card = "rounded-2xl border border-line bg-surface";
   const sub = (a: Appt) => `${a.services?.name ?? "Serviço"}${owner ? ` · ${a.professionals?.display_name}` : ""} · ${brl(a.price_cents)}`;
 
   return (
     <div className="mx-auto max-w-2xl lg:max-w-5xl">
-      <header className="mb-5">
-        <h1 className="font-display text-3xl leading-tight">{greeting()}.</h1>
-        <p className="text-sm text-muted first-letter:uppercase">{longDate(today)}</p>
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl leading-tight">{greeting()}.</h1>
+          <p className="text-sm text-muted first-letter:uppercase">{longDate(today)}</p>
+        </div>
+        <RefreshButton />
       </header>
+      <div className="mb-4"><WalkInButton slug={slug} pros={pros} date={q.date} time={q.time} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-semibold text-accent-ink hover:brightness-110 sm:w-auto" /></div>
       {sp.erro ? <p role="alert" className="mb-4 rounded-xl border border-danger/40 px-4 py-3 text-sm text-danger">Não foi possível atualizar o atendimento. Tente de novo.</p> : null}
 
       <section aria-label="Resumo do dia" className={`${card} mb-4 p-5`}>
@@ -132,6 +158,7 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
                       <div className="mb-3">
                         <p className="font-medium">{a.customers?.full_name ?? "Cliente"}</p>
                         <p className="text-sm text-muted">{d === today ? "Hoje" : dayMonth(d)} às {timeBR(a.starts_at)} · {sub(a)}</p>
+                        <Flag f={flags.get(a.customer_id)} />
                       </div>
                       <Actions slug={slug} id={a.id} owner={owner} size="sm" />
                     </li>
@@ -147,8 +174,9 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
               <p className="text-sm text-accent">Próximo cliente · {relTime(next.starts_at)}</p>
               <p className="font-display mt-1 text-3xl leading-tight">{next.customers?.full_name ?? "Cliente"}</p>
               <p className="mt-1 text-sm text-muted"><span className="tabular-nums text-ink">{timeBR(next.starts_at)}</span> · {sub(next)}</p>
+              <Flag f={flags.get(next.customer_id)} />
               <div className="mt-4"><Contact a={next} shop={barbershop.name} /></div>
-              <div className="mt-4"><Actions slug={slug} id={next.id} owner={owner} size="lg" /></div>
+              <div className="mt-4"><Actions slug={slug} id={next.id} owner={owner} size="lg" started={canClose(next.starts_at)} resched={resched(next, "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line px-4 text-base hover:bg-surface-2")} /></div>
             </section>
           ) : overdue.length === 0 ? (
             <Empty>{todayAll.length === 0 ? "Nenhum horário hoje. Compartilhe a página pública para receber agendamentos." : "Sem mais clientes por hoje."}</Empty>

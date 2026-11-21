@@ -240,3 +240,79 @@ export async function deleteBlock(fd: FormData): Promise<void> {
   }
   redirect(`/painel/${shop.slug}/horarios`);
 }
+
+// ---- Encaixe, remarcação e política de faltas ----
+const STAFF_ERR: Record<string, string> = {
+  slot_unavailable: "Esse horário já está ocupado para este profissional.",
+  slot_blocked: "Esse horário está bloqueado (folga ou feriado).",
+  in_the_past: "Esse horário já passou.",
+  invalid_name: "Informe o nome do cliente (mínimo 2 letras).",
+  invalid_phone: "WhatsApp inválido. Use DDD e número, ou deixe em branco.",
+  service_unavailable: "Esse profissional não faz esse serviço.",
+  professional_unavailable: "Esse profissional não está disponível para este serviço.",
+  forbidden: "Você só pode mexer nos seus próprios horários.",
+  barbershop_unavailable: "O acesso da barbearia está suspenso.",
+  not_found: "Atendimento não encontrado ou já encerrado.",
+};
+const staffErr = (m: string): State => {
+  const k = Object.keys(STAFF_ERR).find((x) => m.includes(x));
+  return { error: k ? STAFF_ERR[k] : MSG_FAIL };
+};
+const startsAtOf = (date: string, time: string) => (DATE.test(date) && TIME.test(time) ? new Date(`${date}T${time}:00-03:00`).toISOString() : null);
+
+// Encaixe: a equipe agenda para um cliente que não tem conta (nome + WhatsApp). O banco valida tudo.
+export async function createWalkIn(_p: State, fd: FormData): Promise<State> {
+  const { barbershop } = await requireShopAccess(s(fd, "slug"));
+  const pro = z.uuid().safeParse(s(fd, "pro"));
+  const svc = z.uuid().safeParse(s(fd, "service"));
+  const at = startsAtOf(s(fd, "date"), s(fd, "time"));
+  if (!pro.success || !svc.success || !at) return { error: "Escolha profissional, serviço, dia e horário." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("staff_create_appointment", {
+    p_shop: barbershop.id, p_professional: pro.data, p_service: svc.data, p_starts_at: at,
+    p_name: s(fd, "name"), p_phone: s(fd, "phone") || null, p_notes: null,
+  });
+  if (error) return staffErr(error.message);
+  revalidatePath(`/painel/${barbershop.slug}`, "layout");
+  return { message: "Atendimento agendado." };
+}
+
+export async function staffReschedule(_p: State, fd: FormData): Promise<State> {
+  const { barbershop } = await requireShopAccess(s(fd, "slug"));
+  const id = z.uuid().safeParse(s(fd, "id"));
+  const proRaw = s(fd, "pro");
+  const pro = proRaw ? z.uuid().safeParse(proRaw) : null;
+  const at = startsAtOf(s(fd, "date"), s(fd, "time"));
+  if (!id.success || !at || (pro && !pro.success)) return { error: "Informe o novo dia e horário." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reschedule_appointment", { p_id: id.data, p_starts_at: at, p_professional: pro?.success ? pro.data : null });
+  if (error) return staffErr(error.message);
+  revalidatePath(`/painel/${barbershop.slug}`, "layout");
+  return { message: "Horário remarcado." };
+}
+
+// Regras de agendamento (dono): prazo mínimo para cancelar/remarcar e bloqueio automático por faltas.
+export async function saveShopPolicy(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const hours = Number.parseInt(s(fd, "hours"), 10);
+  const limitRaw = s(fd, "limit");
+  const limit = limitRaw === "" ? null : Number.parseInt(limitRaw, 10);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 72) return { error: "O prazo para cancelar deve ficar entre 0 e 72 horas." };
+  if (limit !== null && (!Number.isInteger(limit) || limit < 1 || limit > 20)) return { error: "O limite de faltas deve ficar entre 1 e 20, ou vazio para desligar." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("barbershops").update({ cancel_min_hours: hours, no_show_limit: limit }).eq("id", shop.id);
+  if (error) return fail();
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  return { message: "Regras salvas." };
+}
+
+export async function toggleCustomerBlock(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  if (id.success) {
+    const supabase = await createClient();
+    await supabase.from("customers").update({ booking_blocked: s(fd, "block") === "1" }).eq("id", id.data).eq("barbershop_id", shop.id);
+    revalidatePath(`/painel/${shop.slug}/clientes`);
+  }
+  redirect(`/painel/${shop.slug}/clientes`);
+}

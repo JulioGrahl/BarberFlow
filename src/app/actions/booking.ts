@@ -26,6 +26,7 @@ const ERRORS: Record<string, string> = {
   slot_unavailable: "Esse horário acabou de ser ocupado. Volte e escolha outro.",
   barbershop_unavailable: "Esta barbearia não está disponível para agendamentos no momento.",
   service_unavailable: "Este serviço não está mais disponível.",
+  customer_blocked: "Não foi possível agendar online. Fale com a barbearia pelo WhatsApp para combinar seu horário.",
 };
 
 export async function createBooking(_prev: BookingState, fd: FormData): Promise<BookingState> {
@@ -59,4 +60,15 @@ export async function cancelMyBooking(fd: FormData): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_my_appointment", { p_id: id.data });
   redirect(error ? (error.message.includes("too_late") ? "/app?erro=prazo" : "/app?erro=cancelamento") : "/app?cancelado=1");
+}
+
+export async function rescheduleMyBooking(fd: FormData): Promise<void> {
+  await requireUser("/app");
+  const id = z.uuid().safeParse(fd.get("id"));
+  const at = String(fd.get("at") ?? "");
+  if (!id.success || Number.isNaN(Date.parse(at))) redirect("/app?erro=remarcacao");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reschedule_appointment", { p_id: id.data, p_starts_at: new Date(at).toISOString(), p_professional: null });
+  if (error) redirect(`/app?erro=${error.message.includes("too_late") ? "prazo" : error.message.includes("slot_unavailable") ? "ocupado" : "remarcacao"}`);
+  redirect("/app?remarcado=1");
 }

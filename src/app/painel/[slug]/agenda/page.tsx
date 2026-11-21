@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { setAppointmentStatus } from "@/app/actions/shop";
-import { requireShopAccess } from "@/lib/auth";
+import { getUser, requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { brl, longDate, nextDays, spParts, timeBR, weekdayShort } from "@/lib/format";
+import { brl, canClose, longDate, nextDays, nextQuarter, spParts, timeBR, weekdayShort } from "@/lib/format";
+import { loadFlags, loadStaffPros } from "@/lib/staff-data";
+import { WalkInButton } from "@/components/walkin-form";
+import { RescheduleButton } from "@/components/reschedule-form";
 import { Empty, PageHead } from "@/components/kit";
 import { Check, ChevronLeft, ChevronRight, UserX, X } from "lucide-react";
 
 export const metadata: Metadata = { title: "Agenda" };
 
 type Row = {
-  id: string; starts_at: string; ends_at: string; status: string; price_cents: number;
+  id: string; starts_at: string; ends_at: string; status: string; price_cents: number; customer_id: string; service_id: string; professional_id: string;
   customers: { full_name: string; phone: string | null } | null;
   services: { name: string } | null;
   professionals: { display_name: string } | null;
@@ -37,7 +40,7 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
   const supabase = await createClient();
   let q = supabase
     .from("appointments")
-    .select("id, starts_at, ends_at, status, price_cents, customers(full_name, phone), services(name), professionals(display_name)")
+    .select("id, starts_at, ends_at, status, price_cents, customer_id, service_id, professional_id, customers(full_name, phone), services(name), professionals(display_name)")
     .eq("barbershop_id", barbershop.id).gte("starts_at", from).lt("starts_at", to).order("starts_at");
   if (role === "owner" && sp.pro) q = q.eq("professional_id", sp.pro);
   let wq = supabase.from("appointments").select("starts_at").eq("barbershop_id", barbershop.id).neq("status", "cancelled")
@@ -48,6 +51,12 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
     role === "owner" ? supabase.from("professionals").select("id, display_name").eq("barbershop_id", barbershop.id).eq("active", true).order("display_name") : Promise.resolve({ data: [] }),
   ]);
   const rows = (data ?? []) as unknown as Row[];
+  const user = await getUser();
+  const [staffPros, flags] = await Promise.all([
+    loadStaffPros(supabase, barbershop.id, role === "owner", user?.id ?? ""),
+    loadFlags(supabase, barbershop.id, rows.filter((r) => r.status === "scheduled").map((r) => r.customer_id)),
+  ]);
+  const nq = nextQuarter();
   const counts = new Map<string, number>();
   for (const a of wk ?? []) { const d = spParts(a.starts_at as string).ymd; counts.set(d, (counts.get(d) ?? 0) + 1); }
   const total = rows.filter((r) => r.status === "completed").reduce((a, r) => a + r.price_cents, 0);
@@ -63,6 +72,7 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
           <Link href={qs(addDays(day, -1))} className={arrow} aria-label="Dia anterior"><ChevronLeft size={18} /></Link>
           {day !== today ? <Link href={qs(today)} className="rounded-lg border border-line px-3 py-2 text-sm hover:bg-surface">Hoje</Link> : null}
           <Link href={qs(addDays(day, 1))} className={arrow} aria-label="Próximo dia"><ChevronRight size={18} /></Link>
+          <WalkInButton slug={slug} pros={staffPros} date={day < nq.date ? nq.date : day} time={day === nq.date || day < nq.date ? nq.time : "09:00"} />
         </>
       } />
 
@@ -106,15 +116,28 @@ export default async function AgendaPage({ params, searchParams }: { params: Pro
                       <p className="truncate font-medium">{r.customers?.full_name ?? "Cliente"}</p>
                       <p className="truncate text-sm text-muted">{r.services?.name}{role === "owner" ? ` · ${r.professionals?.display_name}` : ""} · {brl(r.price_cents)}</p>
                       {r.customers?.phone ? <p className="text-xs text-muted">{r.customers.phone}</p> : null}
+                      {r.status === "scheduled" && (flags.get(r.customer_id)?.no_shows || flags.get(r.customer_id)?.blocked) ? (
+                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-warn/40 px-2 py-0.5 text-xs text-warn">{flags.get(r.customer_id)!.no_shows} faltas em 90 dias{flags.get(r.customer_id)!.blocked ? " · bloqueado online" : ""}</p>
+                      ) : null}
                     </div>
                     {r.status === "scheduled" ? (
-                      <div className="flex gap-1.5">
-                        {([["completed", "Concluir", Check, "bg-accent text-accent-ink hover:brightness-110"], ["no_show", "Faltou", UserX, "border border-line hover:bg-surface-2"], ...(role === "owner" ? [["cancelled", "Cancelar", X, "border border-line hover:bg-surface-2 hover:text-danger"]] : [])] as [string, string, typeof Check, string][]).map(([st, text, Icon, cls]) => (
+                      <div className="flex flex-wrap gap-1.5">
+                        <RescheduleButton slug={slug} id={r.id} date={spParts(r.starts_at).ymd} time={timeBR(r.starts_at)} who={r.customers?.full_name ?? "Cliente"} proId={r.professional_id}
+                          pros={role === "owner" ? staffPros.filter((x) => x.services.some((sv) => sv.id === r.service_id)).map((x) => ({ id: x.id, name: x.name })) : undefined}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-surface-2" />
+                        {([["completed", "Concluir", Check, "bg-accent text-accent-ink hover:brightness-110"], ["no_show", "Faltou", UserX, "border border-line hover:bg-surface-2"]] as [string, string, typeof Check, string][])
+                          .filter(() => canClose(r.starts_at)).map(([st, text, Icon, cls]) => (
                           <form key={st} action={setAppointmentStatus}>
                             <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={r.id} /><input type="hidden" name="status" value={st} /><input type="hidden" name="dia" value={day} />
                             <button className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm ${cls}`}><Icon size={15} aria-hidden />{text}</button>
                           </form>
                         ))}
+                        {role === "owner" ? (
+                          <form action={setAppointmentStatus}>
+                            <input type="hidden" name="slug" value={slug} /><input type="hidden" name="id" value={r.id} /><input type="hidden" name="status" value="cancelled" /><input type="hidden" name="dia" value={day} />
+                            <button className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-surface-2 hover:text-danger"><X size={15} aria-hidden />Cancelar</button>
+                          </form>
+                        ) : null}
                       </div>
                     ) : <span className={`text-sm ${text}`}>{label}</span>}
                   </div>
