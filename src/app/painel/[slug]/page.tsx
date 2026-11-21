@@ -98,7 +98,7 @@ export default async function TodayPage({ params, searchParams }: { params: Prom
     <div className="mx-auto max-w-2xl lg:max-w-5xl">
       <header className="mb-5">
         <h1 className="font-display text-3xl leading-tight">{greeting()}.</h1>
-        <p className="text-sm capitalize text-muted">{longDate(today)}</p>
+        <p className="text-sm text-muted first-letter:uppercase">{longDate(today)}</p>
       </header>
       {sp.erro ? <p role="alert" className="mb-4 rounded-xl border border-danger/40 px-4 py-3 text-sm text-danger">Não foi possível atualizar o atendimento. Tente de novo.</p> : null}
 
