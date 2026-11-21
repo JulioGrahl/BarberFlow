@@ -189,3 +189,49 @@ export async function deleteTransaction(fd: FormData): Promise<void> {
   revalidatePath(`/painel/${shop.slug}`, "layout");
   redirect(back);
 }
+
+// Folgas, feriados e bloqueios: o banco já os respeita ao calcular horários livres (blocked_times).
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const plusDay = (ymd: string) => new Date(Date.parse(`${ymd}T12:00:00Z`) + 864e5).toISOString().slice(0, 10);
+
+export async function addBlock(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const from = s(fd, "from");
+  const to = s(fd, "to") || from;
+  const allDay = fd.get("all_day") === "on";
+  const proRaw = s(fd, "pro");
+  const pro = proRaw ? z.uuid().safeParse(proRaw) : null;
+  if (pro && !pro.success) return { error: "Profissional inválido." };
+  if (!DATE.test(from) || !DATE.test(to) || to < from) return { error: "Informe a data inicial e, se for mais de um dia, uma data final igual ou posterior." };
+  let startsAt: string, endsAt: string;
+  if (allDay) {
+    startsAt = `${from}T00:00:00-03:00`;
+    endsAt = `${plusDay(to)}T00:00:00-03:00`;
+  } else {
+    const [a, b] = [s(fd, "start"), s(fd, "end")];
+    if (!TIME.test(a) || !TIME.test(b) || a >= b || to !== from) return { error: "Para bloquear só parte do dia, use um único dia e informe início e fim válidos." };
+    startsAt = `${from}T${a}:00-03:00`;
+    endsAt = `${from}T${b}:00-03:00`;
+  }
+  const proId = pro?.success ? pro.data : null;
+  const supabase = await createClient();
+  const { error } = await supabase.from("blocked_times").insert({ barbershop_id: shop.id, professional_id: proId, starts_at: startsAt, ends_at: endsAt, reason: s(fd, "reason") || null });
+  if (error) return fail();
+  // Bloquear não cancela o que já está marcado: avisa quantos atendimentos caem no período.
+  let q = supabase.from("appointments").select("id", { count: "exact", head: true }).eq("barbershop_id", shop.id).eq("status", "scheduled").gte("starts_at", startsAt).lt("starts_at", endsAt);
+  if (proId) q = q.eq("professional_id", proId);
+  const { count } = await q;
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  return { message: count ? `Bloqueio salvo. Atenção: já há ${count} atendimento(s) agendado(s) nesse período; cancele-os na agenda.` : "Bloqueio salvo." };
+}
+
+export async function deleteBlock(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  if (id.success) {
+    const supabase = await createClient();
+    await supabase.from("blocked_times").delete().eq("id", id.data).eq("barbershop_id", shop.id);
+    revalidatePath(`/painel/${shop.slug}`, "layout");
+  }
+  redirect(`/painel/${shop.slug}/horarios`);
+}
