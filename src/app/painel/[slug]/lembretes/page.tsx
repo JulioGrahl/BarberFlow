@@ -3,6 +3,7 @@ import { markNotificationSent } from "@/app/actions/shop";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fullDateTimeBR, nextDays, nowISO } from "@/lib/format";
+import { Empty, PageHead } from "@/components/kit";
 import { buildMessage, waLink, type MsgKind } from "@/lib/whatsapp";
 
 export const metadata: Metadata = { title: "Lembretes" };
@@ -34,42 +35,41 @@ export default async function RemindersPage({ params, searchParams }: { params: 
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">Lembretes</h1>
-      <p className="mt-1 text-sm text-muted">Atendimentos de hoje e amanhã. O botão abre o WhatsApp com a mensagem pronta; você envia e depois marca como enviado. Nada é enviado automaticamente.</p>
-      {sp.erro ? <p role="alert" className="mt-4 rounded-xl border border-danger/40 px-3.5 py-2.5 text-sm text-danger">Não foi possível registrar o envio.</p> : null}
-      <ul className="mt-6 space-y-3">
-        {rows.length === 0 ? <li className="rounded-2xl border border-line bg-surface p-4 text-sm text-muted">Nenhum atendimento agendado para hoje ou amanhã.</li> : rows.map((r) => {
-          const info = { customer: r.customers?.full_name ?? "", shop: barbershop.name, service: r.services?.name ?? "", pro: r.professionals?.display_name ?? "", when: fullDateTimeBR(r.starts_at) };
-          return (
-            <li key={r.id} className="rounded-2xl border border-line bg-surface p-4 text-sm">
-              <p className="text-base font-medium">{r.customers?.full_name} · {r.services?.name}</p>
-              <p className="text-muted">{fullDateTimeBR(r.starts_at)} · com {r.professionals?.display_name} · {r.customers?.phone ?? "sem telefone"}</p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                {KINDS.map(([kind, label]) => {
-                  const text = buildMessage(kind, info);
-                  const link = waLink(r.customers?.phone, text);
-                  const isDone = done.has(`${r.id}:${kind}`);
-                  return (
-                    <div key={kind} className="flex items-center gap-2 rounded-xl border border-line p-2">
-                      <span className="px-1 text-muted">{label}</span>
-                      {link ? <a href={link} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-accent-ink hover:brightness-110">WhatsApp</a> : <span className="text-xs text-warn">telefone inválido</span>}
-                      {isDone ? <span className="text-xs text-success">enviado</span> : link ? (
-                        <form action={markNotificationSent}>
-                          <input type="hidden" name="slug" value={slug} />
-                          <input type="hidden" name="appointment" value={r.id} />
-                          <input type="hidden" name="kind" value={kind} />
-                          <input type="hidden" name="message" value={text} />
-                          <button className="rounded-lg border border-line px-3 py-1.5 hover:bg-surface-2">Marcar enviado</button>
-                        </form>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <PageHead title="Lembretes" sub="Hoje e amanhã. O botão abre o WhatsApp com a mensagem pronta; você envia e marca como enviado. Nada é enviado automaticamente." />
+      {sp.erro ? <p role="alert" className="mb-4 rounded-lg border border-danger/40 px-3.5 py-2.5 text-sm text-danger">Não foi possível registrar o envio.</p> : null}
+      {rows.length === 0 ? <Empty>Nenhum atendimento agendado para hoje ou amanhã.</Empty> : (
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {rows.map((r) => {
+            const info = { customer: r.customers?.full_name ?? "", shop: barbershop.name, service: r.services?.name ?? "", pro: r.professionals?.display_name ?? "", when: fullDateTimeBR(r.starts_at) };
+            return (
+              <li key={r.id} className="rounded-xl border border-line bg-surface p-4 text-sm">
+                <p className="font-display text-lg">{r.customers?.full_name}</p>
+                <p className="text-muted">{r.services?.name} com {r.professionals?.display_name}</p>
+                <p className="text-muted">{fullDateTimeBR(r.starts_at)} · {r.customers?.phone ?? "sem telefone"}</p>
+                <div className="mt-3 space-y-2 border-t border-line pt-3">
+                  {KINDS.map(([kind, label]) => {
+                    const text = buildMessage(kind, info);
+                    const link = waLink(r.customers?.phone, text);
+                    const isDone = done.has(`${r.id}:${kind}`);
+                    return (
+                      <div key={kind} className="flex items-center gap-2">
+                        <span className="w-24 text-muted">{label}</span>
+                        {link ? <a href={link} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-accent px-3 py-1.5 font-semibold text-accent-ink hover:brightness-110">WhatsApp</a> : <span className="text-xs text-warn">telefone inválido</span>}
+                        {isDone ? <span className="text-xs text-success">enviado</span> : link ? (
+                          <form action={markNotificationSent}>
+                            <input type="hidden" name="slug" value={slug} /><input type="hidden" name="appointment" value={r.id} /><input type="hidden" name="kind" value={kind} /><input type="hidden" name="message" value={text} />
+                            <button className="rounded-lg border border-line px-3 py-1.5 hover:bg-surface-2">Marcar enviado</button>
+                          </form>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </>
   );
 }

@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/master-forms";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { WEEKDAYS } from "@/lib/format";
+import { PageHead } from "@/components/kit";
 
 export const metadata: Metadata = { title: "Horários" };
 const hm = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
@@ -19,37 +20,41 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
   const q = supabase.from("schedules").select("weekday, start_time, end_time, break_start, break_end").eq("barbershop_id", barbershop.id);
   const { data: rows } = await (current ? q.eq("professional_id", current.id) : q.is("professional_id", null));
   const byDay = new Map((rows ?? []).map((r) => [r.weekday, r]));
-  const tab = (active: boolean) => `rounded-xl border px-3.5 py-2 text-sm ${active ? "border-accent bg-accent/10 text-accent" : "border-line hover:bg-surface"}`;
-  const time = "rounded-xl border border-line bg-surface-2 px-2.5 py-2 text-base";
+  const time = "w-[5.5rem] rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-base";
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">Horários</h1>
-      <p className="mt-1 text-sm text-muted">
-        Defina o funcionamento da barbearia. Se um profissional tiver horário próprio em um dia, vale o período em comum com o da barbearia; sem horário próprio, vale o da barbearia.
-      </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Link href={`/painel/${slug}/horarios`} className={tab(!current)}>Barbearia</Link>
-        {(pros ?? []).map((p) => <Link key={p.id} href={`/painel/${slug}/horarios?pro=${p.id}`} className={tab(current?.id === p.id)}>{p.display_name}</Link>)}
+      <PageHead title="Horários" sub="Funcionamento da barbearia e, se precisar, horário próprio de cada profissional (vale o período em comum com o da barbearia)." />
+      <div className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1">
+        {[{ id: "", display_name: "Barbearia" }, ...(pros ?? [])].map((p) => (
+          <Link key={p.id} href={p.id ? `/painel/${slug}/horarios?pro=${p.id}` : `/painel/${slug}/horarios`}
+            className={`rounded-md px-3 py-1.5 text-sm ${(current?.id ?? "") === p.id ? "bg-surface-2 text-accent" : "text-muted hover:text-ink"}`}>{p.display_name}</Link>
+        ))}
       </div>
-      <ActionForm key={current?.id ?? "shop"} action={saveHours} submit="Salvar horários" className="mt-6 space-y-3">
+      <ActionForm key={current?.id ?? "shop"} action={saveHours} submit="Salvar horários" className="max-w-3xl space-y-4">
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="pro" value={current?.id ?? ""} />
-        {WEEKDAYS.map((name, d) => {
-          const r = byDay.get(d);
-          return (
-            <div key={d} className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-surface p-3">
-              <label className="flex w-32 items-center gap-2 text-sm"><input type="checkbox" name={`on_${d}`} defaultChecked={!!r} /> {name}</label>
-              <input type="time" name={`start_${d}`} defaultValue={hm(r?.start_time) || "09:00"} className={time} aria-label={`${name}: abertura`} />
-              <span className="text-muted">às</span>
-              <input type="time" name={`end_${d}`} defaultValue={hm(r?.end_time) || "18:00"} className={time} aria-label={`${name}: fechamento`} />
-              <span className="ml-2 text-xs text-muted">Intervalo</span>
-              <input type="time" name={`bs_${d}`} defaultValue={hm(r?.break_start)} className={time} aria-label={`${name}: início do intervalo`} />
-              <span className="text-muted">–</span>
-              <input type="time" name={`be_${d}`} defaultValue={hm(r?.break_end)} className={time} aria-label={`${name}: fim do intervalo`} />
-            </div>
-          );
-        })}
+        <div className="divide-y divide-line rounded-xl border border-line bg-surface">
+          {WEEKDAYS.map((name, d) => {
+            const r = byDay.get(d);
+            return (
+              <div key={d} className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 has-[input[type=checkbox]:not(:checked)]:text-muted">
+                <label className="flex w-32 cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" name={`on_${d}`} defaultChecked={!!r} className="size-4 accent-[var(--bf-accent)]" /> {name}</label>
+                <div className="flex items-center gap-2 group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
+                  <input type="time" name={`start_${d}`} defaultValue={hm(r?.start_time) || "09:00"} className={time} aria-label={`${name}: abertura`} />
+                  <span className="text-muted">às</span>
+                  <input type="time" name={`end_${d}`} defaultValue={hm(r?.end_time) || "18:00"} className={time} aria-label={`${name}: fechamento`} />
+                </div>
+                <div className="flex items-center gap-2 text-xs group-has-[input[type=checkbox]:not(:checked)]:opacity-40">
+                  <span className="text-muted">intervalo</span>
+                  <input type="time" name={`bs_${d}`} defaultValue={hm(r?.break_start)} className={time} aria-label={`${name}: início do intervalo`} />
+                  <span className="text-muted">–</span>
+                  <input type="time" name={`be_${d}`} defaultValue={hm(r?.break_end)} className={time} aria-label={`${name}: fim do intervalo`} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </ActionForm>
     </>
   );
