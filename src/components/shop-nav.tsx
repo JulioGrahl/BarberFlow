@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Clock, LayoutDashboard, MessageCircle, LogOut, Scissors, Users } from "lucide-react";
+import { CalendarDays, Clock, Wallet, LayoutDashboard, MessageCircle, LogOut, Scissors, Users } from "lucide-react";
 
 export function ShopNav({ slug, owner }: { slug: string; owner: boolean }) {
   const path = usePathname();
@@ -10,6 +10,7 @@ export function ShopNav({ slug, owner }: { slug: string; owner: boolean }) {
   const items = [
     { href: base, label: "Dashboard", icon: LayoutDashboard, exact: true },
     { href: `${base}/agenda`, label: "Agenda", icon: CalendarDays },
+    { href: `${base}/financeiro`, label: owner ? "Financeiro" : "Meus ganhos", icon: Wallet },
     ...(owner
       ? [
           { href: `${base}/servicos`, label: "Serviços", icon: Scissors },

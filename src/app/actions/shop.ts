@@ -159,3 +159,33 @@ export async function markNotificationSent(fd: FormData): Promise<void> {
   revalidatePath(back);
   redirect(back);
 }
+
+// Financeiro (somente dono): lançamentos manuais. Receitas de atendimentos são automáticas e não se editam aqui.
+export async function addTransaction(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const type = z.enum(["income", "expense"]).safeParse(s(fd, "type"));
+  const amount = toCents(s(fd, "amount"));
+  const date = z.iso.date().safeParse(s(fd, "date"));
+  const category = s(fd, "category") || "geral";
+  if (!type.success || !Number.isFinite(amount) || amount <= 0 || !date.success || category.length > 60)
+    return { error: "Informe tipo, valor maior que zero e data válida." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("transactions").insert({
+    barbershop_id: shop.id, type: type.data, category, amount_cents: amount,
+    description: s(fd, "description").slice(0, 200) || null, occurred_on: date.data,
+  });
+  if (error) return fail();
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  return { message: "Lançamento registrado." };
+}
+
+export async function deleteTransaction(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  const back = `/painel/${shop.slug}/financeiro?mes=${/^\d{4}-\d{2}$/.test(s(fd, "mes")) ? s(fd, "mes") : ""}`;
+  if (!id.success) redirect(back);
+  const supabase = await createClient();
+  await supabase.from("transactions").delete().eq("id", id.data).eq("barbershop_id", shop.id).is("appointment_id", null);
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  redirect(back);
+}
