@@ -5,6 +5,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Esconde o botão "N" do modo de desenvolvimento, que fica por cima do menu no celular (não existe em produção).
   devIndicators: false,
+  // Fotos já são reduzidas no navegador (≈300 KB), mas o padrão de 1 MB é apertado para formulário com imagem.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   turbopack: {
     rules: {
       "*.css": {

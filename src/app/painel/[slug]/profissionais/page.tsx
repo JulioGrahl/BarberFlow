@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { nowISO, tsDateBR } from "@/lib/format";
 import { Plus } from "lucide-react";
 import { Drawer } from "@/components/drawer";
+import { PhotoInput } from "@/components/photo-input";
+import { mediaUrl } from "@/lib/media";
 import { Empty, PageHead } from "@/components/kit";
 
 export const metadata: Metadata = { title: "Profissionais" };
@@ -15,7 +17,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
   const { barbershop } = await requireShopAccess(slug, ["owner"]);
   const supabase = await createClient();
   const [pros, services, links, commissions, invites, access] = await Promise.all([
-    supabase.from("professionals").select("id, display_name, active").eq("barbershop_id", barbershop.id).order("display_name"),
+    supabase.from("professionals").select("id, display_name, active, photo_path").eq("barbershop_id", barbershop.id).order("display_name"),
     supabase.from("services").select("id, name").eq("barbershop_id", barbershop.id).eq("active", true).order("name"),
     supabase.from("professional_services").select("professional_id, service_id").eq("barbershop_id", barbershop.id),
     supabase.from("professional_commissions").select("professional_id, percent").eq("barbershop_id", barbershop.id),
@@ -53,6 +55,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
           <Drawer title="Novo profissional" trigger={<><Plus size={16} aria-hidden /> Adicionar</>}>
             <ActionForm action={saveProfessional} submit="Adicionar profissional" className="space-y-4">
               {fields()}
+              <PhotoInput shape="round" label="Foto (aparece na página pública)" />
               <L label="Nome"><input name="name" required className={inputCls} /></L>
               <L label="Comissão (%)"><input name="percent" defaultValue="0" inputMode="decimal" className={inputCls} /></L>
               {serviceBoxes()}
@@ -70,7 +73,10 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                 <Drawer title={p.display_name} triggerClassName={`group flex w-full items-center gap-4 rounded-xl border border-line bg-surface p-4 text-left transition hover:border-accent/50 ${p.active ? "" : "opacity-50"}`}
                   trigger={
                     <>
-                      <span className="font-display flex size-12 shrink-0 items-center justify-center rounded-full bg-night text-xl text-white">{p.display_name.slice(0, 1)}</span>
+                      {p.photo_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={mediaUrl(p.photo_path)!} alt="" className="size-12 shrink-0 rounded-full object-cover" />
+                      ) : <span className="font-display flex size-12 shrink-0 items-center justify-center rounded-full bg-night text-xl text-white">{p.display_name.slice(0, 1)}</span>}
                       <span className="min-w-0">
                         <span className="font-display block truncate text-lg">{p.display_name}</span>
                         <span className="block text-xs text-muted">{pct(p.id)}% de comissão · {n} {n === 1 ? "serviço" : "serviços"}</span>
@@ -81,6 +87,7 @@ export default async function ProfessionalsPage({ params }: { params: Promise<{ 
                   <div className="space-y-6">
                     <ActionForm action={saveProfessional} submit="Salvar alterações" className="space-y-4">
                       {fields(p.id)}
+                      <PhotoInput shape="round" label="Foto (aparece na página pública)" currentUrl={mediaUrl(p.photo_path)} />
                       <L label="Nome"><input name="name" defaultValue={p.display_name} required className={inputCls} /></L>
                       <L label="Comissão (%)"><input name="percent" defaultValue={pct(p.id)} inputMode="decimal" className={inputCls} /></L>
                       {serviceBoxes(p.id)}

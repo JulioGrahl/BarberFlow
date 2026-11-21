@@ -24,6 +24,18 @@ async function origin() {
   return `${host.startsWith("localhost") ? "http" : "https"}://${host}`;
 }
 
+
+// ---- imagens (bucket shop-media; a RLS do storage só deixa escrever na pasta da própria barbearia)
+type Db = Awaited<ReturnType<typeof createClient>>;
+const fileOf = (fd: FormData) => { const f = fd.get("photo"); return f instanceof File && f.size > 0 ? f : null; };
+async function uploadImage(db: Db, shopId: string, folder: string, f: File): Promise<string | null> {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(f.type) || f.size > 3 * 1024 * 1024) return null;
+  const path = `${shopId}/${folder}/${crypto.randomUUID()}.${f.type === "image/png" ? "png" : f.type === "image/webp" ? "webp" : "jpg"}`;
+  const { error } = await db.storage.from("shop-media").upload(path, f, { contentType: f.type, cacheControl: "31536000" });
+  return error ? null : path;
+}
+const dropImage = async (db: Db, path: string | null | undefined) => { if (path) await db.storage.from("shop-media").remove([path]); };
+
 const MSG_FAIL = "Não foi possível salvar. Verifique os dados e tente novamente.";
 const fail = (): State => ({ error: MSG_FAIL });
 
@@ -61,6 +73,19 @@ export async function saveProfessional(_p: State, fd: FormData): Promise<State> 
     const { data, error } = await supabase.from("professionals").insert({ barbershop_id: shop.id, display_name: name, active: true }).select("id").single();
     if (error || !data) return fail();
     id = data.id;
+  }
+  // foto: troca, remoção ou nada
+  const photo = fileOf(fd);
+  if (photo || fd.get("remove_photo") === "1") {
+    const { data: old } = await supabase.from("professionals").select("photo_path").eq("id", id).eq("barbershop_id", shop.id).maybeSingle();
+    let next: string | null = null;
+    if (photo) {
+      next = await uploadImage(supabase, shop.id, "equipe", photo);
+      if (!next) return { error: "A foto precisa ser JPG, PNG ou WebP com até 3 MB." };
+    }
+    const u = await supabase.from("professionals").update({ photo_path: next }).eq("id", id).eq("barbershop_id", shop.id);
+    if (u.error) return fail();
+    await dropImage(supabase, old?.photo_path);
   }
   const c = await supabase.from("professional_commissions").upsert({ professional_id: id, barbershop_id: shop.id, percent });
   if (c.error) return fail();
@@ -315,4 +340,53 @@ export async function toggleCustomerBlock(fd: FormData): Promise<void> {
     revalidatePath(`/painel/${shop.slug}/clientes`);
   }
   redirect(`/painel/${shop.slug}/clientes`);
+}
+
+// ---------------------------------------------------------------- vitrine de produtos (só exibição)
+export async function saveProduct(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const name = s(fd, "name");
+  const description = s(fd, "description");
+  const priceRaw = s(fd, "price");
+  const price = priceRaw ? toCents(priceRaw) : null;
+  if (name.length < 2 || name.length > 80 || description.length > 240 || (price !== null && (!Number.isFinite(price) || price < 0)))
+    return { error: "Informe o nome (até 80 letras), descrição de até 240 letras e um preço válido, ou deixe o preço em branco." };
+  const supabase = await createClient();
+  let id = s(fd, "id");
+  const row = { name, description: description || null, price_cents: price, active: fd.get("active") === "on" };
+  if (id) {
+    const { error } = await supabase.from("products").update(row).eq("id", id).eq("barbershop_id", shop.id);
+    if (error) return fail();
+  } else {
+    const { data, error } = await supabase.from("products").insert({ barbershop_id: shop.id, ...row, active: true }).select("id").single();
+    if (error || !data) return fail();
+    id = data.id;
+  }
+  const photo = fileOf(fd);
+  if (photo || fd.get("remove_photo") === "1") {
+    const { data: old } = await supabase.from("products").select("photo_path").eq("id", id).eq("barbershop_id", shop.id).maybeSingle();
+    let next: string | null = null;
+    if (photo) {
+      next = await uploadImage(supabase, shop.id, "produtos", photo);
+      if (!next) return { error: "O produto foi salvo, mas a foto precisa ser JPG, PNG ou WebP com até 3 MB." };
+    }
+    const u = await supabase.from("products").update({ photo_path: next }).eq("id", id).eq("barbershop_id", shop.id);
+    if (u.error) return fail();
+    await dropImage(supabase, old?.photo_path);
+  }
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  revalidatePath(`/b/${shop.slug}`);
+  return { message: "Produto salvo." };
+}
+
+export async function deleteProduct(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  const { data: old } = await supabase.from("products").select("photo_path").eq("id", id.data).eq("barbershop_id", shop.id).maybeSingle();
+  const { error } = await supabase.from("products").delete().eq("id", id.data).eq("barbershop_id", shop.id);
+  if (!error) await dropImage(supabase, old?.photo_path);
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  revalidatePath(`/b/${shop.slug}`);
 }
