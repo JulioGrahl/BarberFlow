@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { supabaseEnv } from "./env";
+import { timedFetch } from "./timing";
 
 // Cliente para Server Components, Server Actions e Route Handlers (sessão via cookies).
 export async function createClient() {
   const cookieStore = await cookies();
   const { url, key } = supabaseEnv();
   return createServerClient(url, key, {
+    global: timedFetch ? { fetch: timedFetch } : undefined,
     cookies: {
       getAll() {
         return cookieStore.getAll();

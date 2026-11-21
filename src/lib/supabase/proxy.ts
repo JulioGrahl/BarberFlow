@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "./env";
+import { timedFetch } from "./timing";
 
 // Renova a sessão (cookies) a cada requisição e faz uma checagem OTIMISTA de login.
 // A autorização de verdade acontece nas páginas (src/lib/auth.ts) e na RLS do banco.
@@ -11,6 +12,7 @@ export async function updateSession(request: NextRequest) {
   const { url, key } = supabaseEnv();
 
   const supabase = createServerClient(url, key, {
+    global: timedFetch ? { fetch: timedFetch } : undefined,
     cookies: {
       getAll() {
         return request.cookies.getAll();
