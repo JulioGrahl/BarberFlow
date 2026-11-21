@@ -43,3 +43,5 @@ export const timeBR = (iso: string) =>
   new Date(iso).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
 export const fullDateTimeBR = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "full", timeStyle: "short" });
+
+export const nowISO = () => new Date().toISOString();

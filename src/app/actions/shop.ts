@@ -140,3 +140,22 @@ export async function setAppointmentStatus(fd: FormData): Promise<void> {
   revalidatePath(`/painel/${slug}`, "layout");
   redirect(error ? `${back}&erro=1` : back);
 }
+
+// Registra que o dono enviou (manualmente) a mensagem de WhatsApp. O sistema não envia nada sozinho.
+export async function markNotificationSent(fd: FormData): Promise<void> {
+  const shop = await owner(fd);
+  const appt = z.uuid().safeParse(s(fd, "appointment"));
+  const kind = z.enum(["confirmation", "reminder"]).safeParse(s(fd, "kind"));
+  const message = s(fd, "message").slice(0, 1000);
+  const back = `/painel/${shop.slug}/lembretes`;
+  if (!appt.success || !kind.success || !message) redirect(`${back}?erro=1`);
+  const supabase = await createClient();
+  const { data: a } = await supabase.from("appointments").select("customer_id").eq("id", appt.data).eq("barbershop_id", shop.id).maybeSingle();
+  if (!a) redirect(`${back}?erro=1`);
+  const ins = await supabase.from("notifications").insert({ barbershop_id: shop.id, customer_id: a.customer_id, appointment_id: appt.data, kind: kind.data, message });
+  if (ins.error) redirect(`${back}?erro=1`);
+  // o grant de insert não inclui status/sent_at (ficam com o padrão); marcamos como enviado em seguida
+  await supabase.from("notifications").update({ status: "sent", sent_at: new Date().toISOString() }).eq("appointment_id", appt.data).eq("kind", kind.data).eq("status", "pending");
+  revalidatePath(back);
+  redirect(back);
+}

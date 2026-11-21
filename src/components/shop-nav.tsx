@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Clock, LayoutDashboard, LogOut, Scissors, Users } from "lucide-react";
+import { CalendarDays, Clock, LayoutDashboard, MessageCircle, LogOut, Scissors, Users } from "lucide-react";
 
 export function ShopNav({ slug, owner }: { slug: string; owner: boolean }) {
   const path = usePathname();
@@ -15,6 +15,7 @@ export function ShopNav({ slug, owner }: { slug: string; owner: boolean }) {
           { href: `${base}/servicos`, label: "Serviços", icon: Scissors },
           { href: `${base}/profissionais`, label: "Profissionais", icon: Users },
           { href: `${base}/horarios`, label: "Horários", icon: Clock },
+          { href: `${base}/lembretes`, label: "Lembretes", icon: MessageCircle },
         ]
       : []),
   ];

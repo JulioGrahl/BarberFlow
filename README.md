@@ -21,7 +21,8 @@ Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Lucide, Supabase (Po
 | 8–10. Painel do proprietário (parcial) | convite do proprietário testado de ponta a ponta; serviços, profissionais (comissão, serviços que realiza) e convite de barbeiro prontos — build/lint OK e operações testadas no banco; **telas ainda não conferidas no navegador** |
 | 11–12. Horários e reserva pública | horários da barbearia/profissionais, fluxo `/b/[slug]/agendar` (serviço → profissional → data → horário → login/cadastro → confirmação) e lista/cancelamento na área do cliente; build/lint OK, regras testadas no banco (conflito, intervalo, cancelamento); **telas ainda não conferidas no navegador** |
 | 13. Agenda | `/painel/[slug]/agenda`: dia a dia, filtro por profissional, concluir/não compareceu/cancelar; barbeiro só vê e conclui os próprios; concluir gera a receita; build/lint OK e regras testadas no banco |
-| 14 em diante | pendentes: WhatsApp, financeiro, relatórios, testes de segurança, publicação (seção 15 da especificação) |
+| 14. WhatsApp | `/painel/[slug]/lembretes`: atendimentos de hoje e amanhã com link `wa.me` e mensagem pronta (confirmação/lembrete); você envia manualmente e marca como enviado. Nenhuma mensagem sai sozinha; sem API paga; build/lint OK, links e banco testados |
+| 15 em diante | pendentes: financeiro, relatórios, testes de segurança, publicação (seção 15 da especificação) |
 
 ## Rodando localmente
 Requisitos: Node 20+ e npm.
@@ -58,7 +59,7 @@ No painel do Supabase › Authentication:
 | `/convite/[token]` | pública: aceitar convite de barbeiro ou proprietário |
 | `/app` | cliente logado |
 | `/painel/[slug]` | dono ou barbeiro daquela barbearia |
-| `/painel/[slug]/servicos`, `/profissionais`, `/horarios` | somente o dono |
+| `/painel/[slug]/servicos`, `/profissionais`, `/horarios`, `/lembretes` | somente o dono |
 | `/b/[slug]/agendar`, `/b/[slug]/agendar/confirmar` | pública (a confirmação exige login ou cadastro) |
 | `/master`, `/master/barbearias`, `/master/barbearias/nova`, `/master/barbearias/[slug]`, `/master/planos` | somente Super Admin |
 
