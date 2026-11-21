@@ -96,3 +96,32 @@ export async function revokeInvite(fd: FormData): Promise<void> {
   await supabase.rpc("revoke_invitation", { p_id: id.data });
   revalidatePath(`/painel/${shop.slug}`, "layout");
 }
+
+// Horários: professional vazio = horário de funcionamento da barbearia.
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+export async function saveHours(_p: State, fd: FormData): Promise<State> {
+  const shop = await owner(fd);
+  const proRaw = s(fd, "pro");
+  const pro = proRaw ? z.uuid().safeParse(proRaw) : null;
+  if (pro && !pro.success) return { error: "Profissional inválido." };
+  const proId = pro?.success ? pro.data : null;
+  const rows: { barbershop_id: string; professional_id: string | null; weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null }[] = [];
+  for (let d = 0; d < 7; d++) {
+    if (fd.get(`on_${d}`) !== "on") continue;
+    const [a, b, bs, be] = [s(fd, `start_${d}`), s(fd, `end_${d}`), s(fd, `bs_${d}`), s(fd, `be_${d}`)];
+    if (!TIME.test(a) || !TIME.test(b) || a >= b) return { error: "Em cada dia aberto, informe abertura e fechamento válidos (fechamento depois da abertura)." };
+    if ((bs && !be) || (!bs && be)) return { error: "Informe início e fim do intervalo, ou deixe os dois vazios." };
+    if (bs && (!TIME.test(bs) || !TIME.test(be) || bs >= be || bs < a || be > b)) return { error: "O intervalo precisa estar dentro do horário de funcionamento." };
+    rows.push({ barbershop_id: shop.id, professional_id: proId, weekday: d, start_time: a, end_time: b, break_start: bs || null, break_end: be || null });
+  }
+  const supabase = await createClient();
+  const del = supabase.from("schedules").delete().eq("barbershop_id", shop.id);
+  const { error: e1 } = await (proId ? del.eq("professional_id", proId) : del.is("professional_id", null));
+  if (e1) return fail();
+  if (rows.length > 0) {
+    const { error: e2 } = await supabase.from("schedules").insert(rows);
+    if (e2) return fail();
+  }
+  revalidatePath(`/painel/${shop.slug}`, "layout");
+  return { message: "Horários salvos." };
+}

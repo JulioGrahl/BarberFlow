@@ -19,7 +19,8 @@ Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Lucide, Supabase (Po
 | 3. Autenticação — teste real | cadastro e promoção a Super Admin confirmados pelo usuário |
 | 6–7. Painel Master | código pronto (dashboard, barbearias, Nova Barbearia com link de convite, planos, mensalidades manuais, suporte auditado); build/lint OK e RPCs testadas no banco; **telas ainda não conferidas no navegador** |
 | 8–10. Painel do proprietário (parcial) | convite do proprietário testado de ponta a ponta; serviços, profissionais (comissão, serviços que realiza) e convite de barbeiro prontos — build/lint OK e operações testadas no banco; **telas ainda não conferidas no navegador** |
-| 11 em diante | pendentes: agenda e reserva pública, área do cliente, WhatsApp, financeiro, relatórios (seção 15 da especificação) |
+| 11–12. Horários e reserva pública | horários da barbearia/profissionais, fluxo `/b/[slug]/agendar` (serviço → profissional → data → horário → login/cadastro → confirmação) e lista/cancelamento na área do cliente; build/lint OK, regras testadas no banco (conflito, intervalo, cancelamento); **telas ainda não conferidas no navegador** |
+| 13 em diante | pendentes: agenda do dono/barbeiro, WhatsApp, financeiro, relatórios, testes de segurança, publicação (seção 15 da especificação) |
 
 ## Rodando localmente
 Requisitos: Node 20+ e npm.
@@ -56,7 +57,8 @@ No painel do Supabase › Authentication:
 | `/convite/[token]` | pública: aceitar convite de barbeiro ou proprietário |
 | `/app` | cliente logado |
 | `/painel/[slug]` | dono ou barbeiro daquela barbearia |
-| `/painel/[slug]/servicos`, `/painel/[slug]/profissionais` | somente o dono |
+| `/painel/[slug]/servicos`, `/profissionais`, `/horarios` | somente o dono |
+| `/b/[slug]/agendar`, `/b/[slug]/agendar/confirmar` | pública (a confirmação exige login ou cadastro) |
 | `/master`, `/master/barbearias`, `/master/barbearias/nova`, `/master/barbearias/[slug]`, `/master/planos` | somente Super Admin |
 
 A checagem no proxy (`src/proxy.ts`) é só otimista. A autorização real está em `src/lib/auth.ts` (nas páginas) e na RLS do banco.

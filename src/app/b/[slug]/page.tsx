@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,7 +26,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 // Página pública da barbearia (visível para anônimos graças à RLS: só barbearias com acesso liberado).
-// O fluxo completo de reserva entra na Etapa 11.
 export default async function ShopPage({ params }: Props) {
   const data = await loadShop((await params).slug);
   if (!data) notFound();
@@ -33,6 +33,9 @@ export default async function ShopPage({ params }: Props) {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <p className="text-sm font-semibold tracking-wide text-accent">BARBERFLOW</p>
       <h1 className="mt-2 text-3xl font-semibold">{data.shop.name}</h1>
+      <Link href={`/b/${data.shop.slug}/agendar`} className="mt-6 inline-block rounded-xl bg-accent px-5 py-2.5 font-semibold text-accent-ink hover:brightness-110">
+        Agendar horário
+      </Link>
       <h2 className="mt-8 mb-3 text-lg font-medium">Serviços</h2>
       {data.services.length === 0 ? (
         <p className="text-sm text-muted">Esta barbearia ainda não cadastrou serviços.</p>

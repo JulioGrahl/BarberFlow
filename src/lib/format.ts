@@ -27,3 +27,19 @@ export const isoDateIn = (days: number) => new Date(Date.now() + days * 864e5).t
 // Data (dd/mm/aaaa) de um timestamptz, no fuso da barbearia.
 export const tsDateBR = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+// Próximos n dias (yyyy-mm-dd) a partir de hoje, no fuso de Brasília.
+export function nextDays(n: number): string[] {
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+  const base = Date.now();
+  return Array.from({ length: n }, (_, i) => fmt.format(new Date(base + i * 864e5)));
+}
+
+export const WEEKDAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+export const weekdayShort = (ymd: string) =>
+  ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"][new Date(`${ymd}T12:00:00Z`).getUTCDay()];
+export const dayMonth = (ymd: string) => ymd.slice(8, 10) + "/" + ymd.slice(5, 7);
+export const timeBR = (iso: string) =>
+  new Date(iso).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
+export const fullDateTimeBR = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "full", timeStyle: "short" });
