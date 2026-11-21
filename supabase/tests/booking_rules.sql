@@ -1,6 +1,6 @@
 -- Regras de agendamento (encaixe, remarcação, faltas, bloqueio). Rode no SQL Editor; termina com um erro de propósito
 -- ("RESULTADO: ...") para desfazer tudo. Ajuste os UUIDs abaixo para o seu banco de teste.
--- Esperado: todas as entradas com "ok".
+-- Esperado: todas as entradas com "ok" (M deve trazer customer_blocked).
 do $t$
 declare
   shop uuid := '5cead2de-6766-46d3-af37-1a7d674ffcd2';       -- barbearia de teste
@@ -34,7 +34,7 @@ begin
   reset role;
 
   -- cliente: só remarca o próprio, apenas para horário oferecido; não cria encaixe
-  select s.starts_at into slot from public.get_available_slots(shop, joao, svc, (now() + interval '8 days')::date) s order by 1 limit 1;
+  select s.starts_at into slot from generate_series(3, 16) g(d), lateral public.get_available_slots(shop, joao, svc, (now() + make_interval(days => g.d))::date) s order by s.starts_at limit 1;
   perform set_config('request.jwt.claims', json_build_object('sub', cu, 'role','authenticated')::text, true); set local role authenticated;
   begin perform public.reschedule_appointment(fut, slot); res := res||'K1:ok; '; exception when others then res := res||'K1:ERRO('||sqlerrm||'); '; end;
   begin perform public.reschedule_appointment(a1, slot); res := res||'K2:FALHOU(mexeu no de outro); '; exception when others then res := res||'K2:ok('||sqlerrm||'); '; end;
@@ -46,6 +46,7 @@ begin
   -- faltas: limite 1 bloqueia quem já tem 1 falta nos últimos 90 dias; bloqueio manual do dono; barbeiro não mexe
   insert into appointments(barbershop_id, customer_id, professional_id, service_id, starts_at, ends_at, status, price_cents)
     values (shop, c1, joao, svc, now() - interval '10 days', now() - interval '10 days' + interval '30 min', 'no_show', 4000);
+  update appointments set status = 'cancelled' where id = fut; -- libera o horário para o teste de bloqueio
   update barbershops set no_show_limit = 1 where id = shop;
   perform set_config('request.jwt.claims', json_build_object('sub', cu, 'role','authenticated')::text, true); set local role authenticated;
   begin perform public.create_appointment(shop, joao, svc, slot); res := res||'M:FALHOU; '; exception when others then res := res||'M:ok('||sqlerrm||'); '; end; reset role;
