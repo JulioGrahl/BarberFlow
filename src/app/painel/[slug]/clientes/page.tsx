@@ -29,10 +29,10 @@ export default async function CustomersPage({ params }: { params: Promise<{ slug
         <ActionForm action={saveShopPolicy} submit="Salvar regras" pending="Salvando…" className="grid gap-4 sm:grid-cols-2">
           <input type="hidden" name="slug" value={slug} />
           <L label="Cancelar ou remarcar até quantas horas antes?">
-            <input name="hours" type="number" min={0} max={72} required defaultValue={policy?.cancel_min_hours ?? 2} className={inputCls} />
+            <input key={`h${policy?.cancel_min_hours}`} name="hours" type="number" min={0} max={72} required defaultValue={policy?.cancel_min_hours ?? 2} className={inputCls} />
           </L>
           <L label="Bloquear agendamento online após quantas faltas em 90 dias? (vazio = não bloquear)">
-            <input name="limit" type="number" min={1} max={20} defaultValue={limit ?? ""} placeholder="Desligado" className={inputCls} />
+            <input key={`l${limit ?? ""}`} name="limit" type="number" min={1} max={20} defaultValue={limit ?? ""} placeholder="Desligado" className={inputCls} />
           </L>
           <p className="text-xs text-muted sm:col-span-2">Quem passa do limite vê uma mensagem pedindo para falar com a barbearia pelo WhatsApp. Você pode liberar a qualquer momento na lista abaixo. Cancelar com antecedência não conta como falta.</p>
         </ActionForm>
