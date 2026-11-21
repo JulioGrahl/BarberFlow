@@ -404,7 +404,11 @@ export async function savePageSettings(_p: State, fd: FormData): Promise<State> 
     row[f.key] = v || null;
   }
   const supabase = await createClient();
-  const { error } = await supabase.from("shop_page_settings").upsert({ barbershop_id: shop.id, ...row });
+  // Sem upsert: ele reescreve a chave (barbershop_id), coluna que o cliente não tem permissão de atualizar.
+  const { data: exists } = await supabase.from("shop_page_settings").select("barbershop_id").eq("barbershop_id", shop.id).maybeSingle();
+  const { error } = exists
+    ? await supabase.from("shop_page_settings").update(row).eq("barbershop_id", shop.id)
+    : await supabase.from("shop_page_settings").insert({ barbershop_id: shop.id, ...row });
   if (error) { console.error("savePageSettings:", error.code, error.message); return fail(); }
   revalidatePath(`/painel/${shop.slug}`, "layout");
   revalidatePath(`/b/${shop.slug}`);
