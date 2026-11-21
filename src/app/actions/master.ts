@@ -123,16 +123,17 @@ export async function registerPayment(_prev: MasterState, fd: FormData): Promise
   const amount = toCents(s(fd, "amount"));
   const paidOn = z.iso.date().safeParse(s(fd, "paidOn"));
   const month = z.string().regex(/^\d{4}-\d{2}$/).safeParse(s(fd, "month"));
-  if (!id.success || !Number.isFinite(amount) || amount <= 0 || !paidOn.success || !month.success)
+  const kind = z.enum(["monthly", "setup"]).safeParse(s(fd, "kind") || "monthly");
+  if (!id.success || !Number.isFinite(amount) || amount <= 0 || !paidOn.success || !month.success || !kind.success)
     return { error: "Informe valor, data e mês de referência válidos." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("admin_register_payment", {
     p_shop: id.data, p_amount_cents: amount, p_paid_on: paidOn.data,
-    p_reference_month: `${month.data}-01`, p_note: s(fd, "note") || null,
+    p_reference_month: `${month.data}-01`, p_note: s(fd, "note") || null, p_kind: kind.data,
   });
   if (error) return { error: friendly(error.message) };
   revalidatePath("/master", "layout");
-  return { message: "Pagamento registrado." };
+  return { message: kind.data === "setup" ? "Implantação registrada." : "Mensalidade registrada." };
 }
 
 export async function changePlan(_prev: MasterState, fd: FormData): Promise<MasterState> {

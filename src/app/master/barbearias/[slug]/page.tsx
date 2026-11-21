@@ -34,7 +34,7 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
 
   const [{ data: plans }, { data: payments }, { data: sessions }, { data: logs }] = await Promise.all([
     supabase.from("plans").select("id, name, price_cents, active").order("price_cents"),
-    supabase.from("payments").select("id, amount_cents, paid_on, reference_month, note").eq("barbershop_id", shop.id).order("paid_on", { ascending: false }).limit(12),
+    supabase.from("payments").select("id, amount_cents, paid_on, reference_month, note, kind").eq("barbershop_id", shop.id).order("paid_on", { ascending: false }).limit(12),
     supabase.from("support_sessions").select("id, reason, started_at, expires_at, ended_at").eq("barbershop_id", shop.id).order("started_at", { ascending: false }).limit(5),
     supabase.from("audit_logs").select("id, action, created_at").eq("barbershop_id", shop.id).order("id", { ascending: false }).limit(10),
   ]);
@@ -85,6 +85,12 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
         <Card title="Registrar pagamento">
           <ActionForm action={registerPayment} submit="Registrar" className="space-y-3">
             <input type="hidden" name="id" value={shop.id} />
+            <fieldset className="grid grid-cols-2 gap-1 rounded-lg border border-line bg-surface-2 p-1 text-sm">
+              <legend className="sr-only">Tipo de pagamento</legend>
+              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-surface has-[:checked]:text-accent"><input type="radio" name="kind" value="monthly" defaultChecked className="sr-only" />Mensalidade</label>
+              <label className="cursor-pointer rounded-md px-3 py-2 text-center has-[:checked]:bg-surface has-[:checked]:text-accent"><input type="radio" name="kind" value="setup" className="sr-only" />Implantação</label>
+            </fieldset>
+            <p className="text-xs text-muted">Mensalidade ativa a assinatura e empurra o vencimento em 1 mês. Implantação é um valor único e não mexe no vencimento.</p>
             <div className="grid grid-cols-2 gap-3">
               <L label="Valor (R$)"><input name="amount" inputMode="decimal" required defaultValue={sub ? (sub.price_cents / 100).toFixed(2).replace(".", ",") : ""} className={inputCls} /></L>
               <L label="Pago em"><input name="paidOn" type="date" required defaultValue={today} className={inputCls} /></L>
@@ -96,7 +102,7 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
           <ul className="mt-2 divide-y divide-line text-sm">
             {(payments ?? []).length === 0 ? <li className="py-2 text-muted">Nenhum pagamento registrado.</li> : (payments ?? []).map((p) => (
               <li key={p.id} className="flex justify-between gap-3 py-2">
-                <span>{brl(p.amount_cents)} <span className="text-muted">· ref. {p.reference_month.slice(5, 7)}/{p.reference_month.slice(0, 4)}{p.note ? ` · ${p.note}` : ""}</span></span>
+                <span>{brl(p.amount_cents)} <span className={p.kind === "setup" ? "text-accent" : "text-muted"}>· {p.kind === "setup" ? "implantação" : "mensalidade"}</span> <span className="text-muted">· ref. {p.reference_month.slice(5, 7)}/{p.reference_month.slice(0, 4)}{p.note ? ` · ${p.note}` : ""}</span></span>
                 <span className="text-muted">{dateBR(p.paid_on)}</span>
               </li>
             ))}
