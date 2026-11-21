@@ -25,6 +25,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         </p>
       ) : null}
       <LoginForm next={next} email={first(sp.email)} />
+      <p className="mt-4 text-center text-sm">
+        <Link href="/recuperar-senha" className="text-muted hover:text-ink hover:underline">
+          Esqueci minha senha
+        </Link>
+      </p>
       <p className="mt-6 text-center text-sm text-muted">
         Ainda não tem conta?{" "}
         <Link href={signupHref} className="font-medium text-accent hover:underline">

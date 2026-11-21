@@ -15,5 +15,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}${next ?? (await resolveHome())}`);
     }
   }
-  return NextResponse.redirect(`${origin}/login?erro=confirmacao`);
+  const isRecovery = safeNext(searchParams.get("next")) === "/nova-senha";
+  return NextResponse.redirect(`${origin}${isRecovery ? "/recuperar-senha?erro=link" : "/login?erro=confirmacao"}`);
 }

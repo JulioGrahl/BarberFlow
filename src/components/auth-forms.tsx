@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { acceptInvitation, login, signup, type FormState } from "@/app/actions/auth";
+import { acceptInvitation, login, requestPasswordReset, signup, updatePassword, type FormState } from "@/app/actions/auth";
 import { Field, FormMessage, SubmitButton } from "@/components/ui";
 
 export function LoginForm({ next, email }: { next?: string; email?: string }) {
@@ -29,6 +29,29 @@ export function SignupForm({ next, email }: { next?: string; email?: string }) {
       <Field label="Confirmar senha" id="confirm" type="password" autoComplete="new-password" minLength={8} required />
       <FormMessage error={state?.error} message={state?.message} />
       <SubmitButton pendingText="Criando conta...">Criar conta</SubmitButton>
+    </form>
+  );
+}
+
+export function ResetRequestForm({ email }: { email?: string }) {
+  const [state, action] = useActionState<FormState, FormData>(requestPasswordReset, undefined);
+  return (
+    <form action={action} className="space-y-4">
+      <Field label="E-mail" id="email" type="email" autoComplete="email" required defaultValue={email} />
+      <FormMessage error={state?.error} message={state?.message} />
+      <SubmitButton pendingText="Enviando...">Enviar link</SubmitButton>
+    </form>
+  );
+}
+
+export function NewPasswordForm() {
+  const [state, action] = useActionState<FormState, FormData>(updatePassword, undefined);
+  return (
+    <form action={action} className="space-y-4">
+      <Field label="Nova senha (mínimo 8 caracteres)" id="password" type="password" autoComplete="new-password" minLength={8} required />
+      <Field label="Confirmar nova senha" id="confirm" type="password" autoComplete="new-password" minLength={8} required />
+      <FormMessage error={state?.error} message={state?.message} />
+      <SubmitButton pendingText="Salvando...">Salvar nova senha</SubmitButton>
     </form>
   );
 }
