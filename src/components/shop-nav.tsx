@@ -13,7 +13,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
     { href: base, label: "Hoje", icon: Sun, exact: true },
     { href: `${base}/agenda`, label: "Agenda", icon: CalendarDays },
     { href: `${base}/financeiro`, label: owner ? "Financeiro" : "Meus ganhos", icon: Wallet },
-    { href: `${base}/resumo`, label: "Resumo", icon: ChartNoAxesCombined },
+    { href: `${base}/resumo`, label: owner ? "Resumo" : "Meu resumo", icon: ChartNoAxesCombined },
     ...(owner
       ? [
           { href: `${base}/servicos`, label: "Serviços", icon: Scissors },

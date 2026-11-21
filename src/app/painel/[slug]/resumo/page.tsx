@@ -22,13 +22,15 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
   const supabase = await createClient();
   const today = daysAgo(0);
   const from60 = daysAgo(59);
-  const [{ data: apptData }, { data: txData }] = await Promise.all([
+  const [{ data: apptData }, { data: txData }, commRes] = await Promise.all([
     supabase.from("appointments")
       .select("id, starts_at, status, price_cents, customers(full_name), services(name), professionals(display_name)")
       .eq("barbershop_id", barbershop.id).gte("starts_at", spStartISO(from60)).lt("starts_at", spStartISO(daysAgo(-1)))
       .order("starts_at").limit(3000),
     supabase.from("transactions").select("type, amount_cents, occurred_on").eq("barbershop_id", barbershop.id).eq("type", "income").gte("occurred_on", from60).limit(5000),
+    owner ? Promise.resolve({ data: null }) : supabase.from("professional_commissions").select("percent").eq("barbershop_id", barbershop.id).maybeSingle(),
   ]);
+  const pct = Number((commRes.data as { percent: number } | null)?.percent ?? 0);
   const appts = ((apptData ?? []) as unknown as Appt[]).map((a) => ({ ...a, ...spParts(a.starts_at) }));
   const tx = (txData ?? []) as { amount_cents: number; occurred_on: string }[];
 
@@ -69,13 +71,14 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
 
   return (
     <>
-      <PageHead title="Resumo" sub="Últimos 30 dias, comparados com os 30 anteriores"
+      <PageHead title={owner ? "Resumo" : "Meu resumo"} sub={owner ? "Últimos 30 dias da barbearia, comparados com os 30 anteriores" : "Últimos 30 dias, só dos seus atendimentos, comparados com os 30 anteriores"}
         actions={<Link href={`/painel/${slug}`} className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm hover:bg-surface"><CalendarDays size={16} aria-hidden /> Ver hoje</Link>} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat label={owner ? "Receita em 30 dias" : "Faturado em 30 dias"} value={brl(rev30)} hero>
+        <Stat label={owner ? "Receita em 30 dias" : "Seu faturamento em 30 dias"} value={brl(rev30)} hero>
           <Sparkline values={daily} />
           <div className="mt-2"><Delta pct={pctChange(rev30, revPrev)} /></div>
+          {!owner && pct > 0 ? <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-sm">Sua comissão ({String(pct).replace(".", ",")}%): <strong className="font-semibold text-accent">{brl(Math.round((rev30 * pct) / 100))}</strong></p> : null}
         </Stat>
         <Stat label="Atendimentos concluídos" value={String(done30.length)}><Delta pct={pctChange(done30.length, donePrev.length)} /></Stat>
         <Stat label="Ticket médio" value={brl(ticket)}><span className="text-xs text-muted">por atendimento concluído</span></Stat>
