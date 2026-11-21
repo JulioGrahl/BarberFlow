@@ -122,6 +122,16 @@ begin
   exception when others then
     res := res || jsonb_build_array(jsonb_build_object('t','b1 não remarca horário','ok',true,'err',sqlerrm));
   end;
+  begin
+    update public.appointments set status='completed' where id = apt;
+    res := res || jsonb_build_array(jsonb_build_object('t','b1 não conclui antes do horário','ok',false));
+  exception when others then
+    res := res || jsonb_build_array(jsonb_build_object('t','b1 não conclui antes do horário','ok',sqlerrm='too_early'));
+  end;
+  -- leva o atendimento para o passado (como postgres) para testar a conclusão
+  reset role;
+  update public.appointments set starts_at = now() - interval '1 hour', ends_at = now() - interval '30 minutes' where id = apt;
+  perform set_config('request.jwt.claims', json_build_object('sub',b1,'email','b1@t.test')::text, true); set local role authenticated;
   update public.appointments set status='completed' where id = apt;
   select count(*) into n from public.transactions;
   res := res || jsonb_build_array(jsonb_build_object('t','b1 lê só a própria receita (1: a do atendimento concluído)','ok', n=1,'n',n));
@@ -164,6 +174,11 @@ begin
     perform public.create_invitation(shopA, 'x@t.test');
     res := res || jsonb_build_array(jsonb_build_object('t','dono B não convida na A','ok',false));
   exception when others then res := res || jsonb_build_array(jsonb_build_object('t','dono B não convida na A','ok',sqlstate='42501')); end;
+  begin perform public.staff_create_appointment(shopA, profA1, svc, now() + interval '2 days', 'Fulano');
+    res := res || jsonb_build_array(jsonb_build_object('t','dono B não cria encaixe na A','ok',false));
+  exception when others then res := res || jsonb_build_array(jsonb_build_object('t','dono B não cria encaixe na A','ok',true,'err',sqlerrm)); end;
+  select count(*) into n from public.customer_flags(shopA, array[custA]);
+  res := res || jsonb_build_array(jsonb_build_object('t','dono B não lê faltas de clientes da A (0)','ok', n=0,'n',n));
 
   -- convites
   reset role; perform set_config('request.jwt.claims', json_build_object('sub',c2,'email','c2@t.test')::text, true); set local role authenticated;
@@ -211,6 +226,8 @@ begin
   res := res || jsonb_build_array(jsonb_build_object('t','anon consulta horários (>0)','ok', n>0,'n',n));
   begin perform public.create_appointment(shopA, profA1, svc, slot2); res := res || jsonb_build_array(jsonb_build_object('t','anon não reserva','ok',false));
   exception when insufficient_privilege then res := res || jsonb_build_array(jsonb_build_object('t','anon não reserva','ok',true)); end;
+  begin perform public.staff_create_appointment(shopA, profA1, svc, now() + interval '2 days', 'Fulano'); res := res || jsonb_build_array(jsonb_build_object('t','anon não cria encaixe','ok',false));
+  exception when insufficient_privilege then res := res || jsonb_build_array(jsonb_build_object('t','anon não cria encaixe','ok',true)); end;
   begin perform public.master_stats(); res := res || jsonb_build_array(jsonb_build_object('t','anon não chama master_stats','ok',false));
   exception when insufficient_privilege then res := res || jsonb_build_array(jsonb_build_object('t','anon não chama master_stats','ok',true)); end;
 
