@@ -4,14 +4,18 @@ export type StaffPro = { id: string; name: string; services: { id: string; name:
 
 // Profissionais ativos com os serviços que fazem. O barbeiro só enxerga a si mesmo; o dono, todos.
 export async function loadStaffPros(supabase: SupabaseClient, shopId: string, owner: boolean, userId: string): Promise<StaffPro[]> {
-  const [{ data: pros }, { data: links }, { data: services }] = await Promise.all([
-    supabase.from("professionals").select("id, display_name, user_id").eq("barbershop_id", shopId).eq("active", true).order("display_name"),
+  const [{ data: pros }, { data: links }, { data: services }, mine] = await Promise.all([
+    supabase.from("professionals").select("id, display_name").eq("barbershop_id", shopId).eq("active", true).order("display_name"),
     supabase.from("professional_services").select("professional_id, service_id").eq("barbershop_id", shopId),
     supabase.from("services").select("id, name, price_cents").eq("barbershop_id", shopId).eq("active", true).order("name"),
+    // user_id não é legível pelo cliente (grant por coluna); o banco diz quais profissionais são do usuário logado.
+    owner ? Promise.resolve({ data: null }) : supabase.rpc("my_professional_ids", { p_shop: shopId }),
   ]);
+  void userId;
+  const own = new Set(((mine.data ?? []) as unknown as string[]).map(String));
   const svc = new Map((services ?? []).map((x) => [x.id as string, x as { id: string; name: string; price_cents: number }]));
   return (pros ?? [])
-    .filter((p) => owner || p.user_id === userId)
+    .filter((p) => owner || own.has(p.id as string))
     .map((p) => ({
       id: p.id as string,
       name: p.display_name as string,
