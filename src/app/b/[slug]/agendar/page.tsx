@@ -22,14 +22,14 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
     serviceIds: (links.data ?? []).filter((l) => l.professional_id === p.id).map((l) => l.service_id),
   }));
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
+    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-2xl px-5 py-10">
       <Link href={`/b/${slug}`} className="text-sm text-muted hover:text-ink">← {shop.name}</Link>
-      <h1 className="mt-2 mb-6 text-2xl font-semibold">Agendar horário</h1>
+      <h1 className="font-display mt-3 mb-8 text-4xl">Agendar horário</h1>
       {(services.data ?? []).length === 0 || proList.length === 0 ? (
         <p className="text-sm text-muted">Esta barbearia ainda não liberou agendamentos online.</p>
       ) : (
         <BookingFlow shop={shop.id} slug={slug} services={services.data ?? []} pros={proList} days={nextDays(14)} />
       )}
-    </main>
+    </main></div>
   );
 }

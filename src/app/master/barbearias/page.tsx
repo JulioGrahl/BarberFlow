@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { brl, dateBR, STATUS_LABEL, STATUS_TONE } from "@/lib/format";
+import { PageHead } from "@/components/kit";
 
 export const metadata: Metadata = { title: "Barbearias · Master" };
 
@@ -24,21 +25,17 @@ export default async function ShopsPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Barbearias</h1>
-        <Link href="/master/barbearias/nova" className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-ink hover:brightness-110">
-          Nova Barbearia
-        </Link>
-      </div>
+      <PageHead title="Barbearias" sub={`${rows.length} ${rows.length === 1 ? "barbearia" : "barbearias"}`}
+        actions={<Link href="/master/barbearias/nova" className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-ink hover:brightness-110">Nova barbearia</Link>} />
       <form className="mt-5 flex flex-wrap gap-2">
-        <input name="q" defaultValue={q} placeholder="Buscar por nome ou slug" className="min-w-0 flex-1 rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-base" />
-        <select name="status" defaultValue={status} className="rounded-xl border border-line bg-surface-2 px-3 py-2 text-base">
+        <input name="q" defaultValue={q} placeholder="Buscar por nome ou slug" className="min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-base" />
+        <select name="status" defaultValue={status} className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-base">
           <option value="">Todos os status</option>
           {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <button className="rounded-xl border border-line px-4 py-2 text-sm hover:bg-surface">Filtrar</button>
+        <button className="rounded-lg border border-line px-4 py-2 text-sm hover:bg-surface">Filtrar</button>
       </form>
-      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-surface">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="text-muted">
             <tr>{["Barbearia", "Plano", "Vencimento", "Valor", "Status"].map((h) => <th key={h} className="p-3 font-normal">{h}</th>)}</tr>

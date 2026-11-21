@@ -13,7 +13,7 @@ export default async function PlansPage() {
   const { data: plans } = await supabase.from("plans").select("id, name, price_cents, max_professionals, active").order("price_cents");
   return (
     <>
-      <h1 className="text-2xl font-semibold">Planos</h1>
+      <h1 className="font-display text-3xl">Planos</h1>
       <p className="mt-1 text-sm text-muted">Planos não são apagados: desative para esconder de novas barbearias. Alterar o preço aqui não muda assinaturas existentes.</p>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {(plans ?? []).map((p) => (

@@ -4,7 +4,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { closeSupport } from "@/app/actions/master";
 import { MasterNav } from "@/components/master-nav";
-import { dateTimeBR } from "@/lib/format";
+import { dateTimeBR, nowISO } from "@/lib/format";
 
 type OpenSession = { id: string; expires_at: string; barbershops: { name: string; slug: string } | null };
 
@@ -17,15 +17,12 @@ export default async function MasterLayout({ children }: { children: React.React
     .select("id, expires_at, barbershops(name, slug)")
     .eq("admin_id", profile.id)
     .is("ended_at", null)
-    .gt("expires_at", new Date().toISOString());
+    .gt("expires_at", nowISO());
   const sessions = (data ?? []) as unknown as OpenSession[];
 
   return (
     <div className="flex min-h-full flex-1 flex-col md:flex-row">
-      <aside className="border-b border-line bg-surface p-3 md:w-60 md:border-b-0 md:border-r md:p-4">
-        <p className="px-3 pb-3 text-sm font-semibold tracking-wide text-accent md:pb-5">BARBERFLOW · MASTER</p>
-        <MasterNav />
-      </aside>
+      <MasterNav />
       <div className="min-w-0 flex-1">
         {sessions.map((s) => (
           <div key={s.id} className="flex flex-wrap items-center gap-3 border-b border-warn/40 bg-warn/10 px-4 py-2.5 text-sm text-warn">
@@ -43,7 +40,7 @@ export default async function MasterLayout({ children }: { children: React.React
             </form>
           </div>
         ))}
-        <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-9">{children}</main>
       </div>
     </div>
   );

@@ -50,7 +50,7 @@ export function FormMessage({ error, message }: { error?: string; message?: stri
   return (
     <p
       role={error ? "alert" : "status"}
-      className={`rounded-xl border px-3.5 py-2.5 text-sm ${
+      className={`rounded-lg border px-3.5 py-2.5 text-sm ${
         error ? "border-danger/40 text-danger" : "border-success/40 text-success"
       }`}
     >

@@ -109,6 +109,10 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
   for (const t of tx) if (t.type === "expense") cats.set(t.category, (cats.get(t.category) ?? 0) + t.amount_cents);
   const catItems = [...cats.entries()].sort((a, b) => b[1] - a[1]).map(([label, value]) => ({ label, value, text: brl(value) }));
   const profit = income - expense;
+  const { data: nsData } = await supabase.from("appointments").select("price_cents")
+    .eq("barbershop_id", barbershop.id).eq("status", "no_show")
+    .gte("starts_at", new Date(`${from}T00:00:00-03:00`).toISOString()).lt("starts_at", new Date(`${to}T00:00:00-03:00`).toISOString());
+  const noShowCents = (nsData ?? []).reduce((a, x) => a + x.price_cents, 0);
 
   return (
     <>
@@ -135,6 +139,10 @@ export default async function FinancePage({ params, searchParams }: { params: Pr
         <Stat label="Receitas" value={brl(income)}><Delta pct={pctChange(income, prevIncome)} /></Stat>
         <Stat label="Despesas" value={brl(expense)}><Delta pct={pctChange(expense, prevExpense)} inverse /></Stat>
       </div>
+
+      {nsData && nsData.length > 0 ? (
+        <p className="mt-3 text-sm text-muted">{nsData.length} {nsData.length === 1 ? "cliente faltou" : "clientes faltaram"} neste mês: {brl(noShowCents)} que deixaram de entrar. Esse valor não está na receita.</p>
+      ) : null}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
         <Panel title="Receitas e despesas por dia" className="lg:col-span-3">

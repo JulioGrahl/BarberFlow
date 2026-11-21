@@ -6,7 +6,7 @@ import {
 } from "@/app/actions/master";
 import { ActionForm, inputCls, L } from "@/components/master-forms";
 import { createClient } from "@/lib/supabase/server";
-import { brl, dateBR, dateTimeBR, STATUS_LABEL, STATUS_TONE } from "@/lib/format";
+import { brl, daysAgo, dateBR, dateTimeBR, STATUS_LABEL, STATUS_TONE } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Barbearia · Master" };
 
@@ -14,8 +14,8 @@ type Sub = { status: string; due_on: string; started_on: string; price_cents: nu
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface p-5">
-      <h2 className="mb-4 text-base font-semibold">{title}</h2>
+    <section className="rounded-lg border border-line bg-surface p-5">
+      <h2 className="font-display mb-4 text-lg">{title}</h2>
       {children}
     </section>
   );
@@ -38,7 +38,7 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
     supabase.from("support_sessions").select("id, reason, started_at, expires_at, ended_at").eq("barbershop_id", shop.id).order("started_at", { ascending: false }).limit(5),
     supabase.from("audit_logs").select("id, action, created_at").eq("barbershop_id", shop.id).order("id", { ascending: false }).limit(10),
   ]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = daysAgo(0);
   const thisMonth = today.slice(0, 7);
 
   return (
@@ -46,7 +46,7 @@ export default async function ShopDetail({ params }: { params: Promise<{ slug: s
       <div>
         <Link href="/master/barbearias" className="text-sm text-muted hover:text-ink">← Barbearias</Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold">{shop.name}</h1>
+          <h1 className="font-display text-3xl sm:text-4xl">{shop.name}</h1>
           {sub ? <span className={`rounded-full border px-2.5 py-0.5 text-xs ${STATUS_TONE[sub.status]}`}>{STATUS_LABEL[sub.status]}</span> : null}
         </div>
         <p className="text-sm text-muted">Página pública: /b/{shop.slug}</p>

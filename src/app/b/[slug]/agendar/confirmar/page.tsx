@@ -27,10 +27,10 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
   if (!svc || !pro) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-md flex-1 px-4 py-10">
+    <div className="flex-1"><div className="pole h-2 w-full" aria-hidden /><main className="mx-auto w-full max-w-md px-5 py-10">
       <Link href={`/b/${slug}/agendar`} className="text-sm text-muted hover:text-ink">← Escolher outro horário</Link>
-      <h1 className="mt-2 text-2xl font-semibold">Confirmar agendamento</h1>
-      <dl className="mt-6 space-y-3 rounded-2xl border border-line bg-surface p-5 text-sm">
+      <h1 className="font-display mt-3 text-4xl">Confirmar agendamento</h1>
+      <dl className="mt-6 space-y-3 rounded-xl border border-line bg-surface p-5 text-sm">
         <div className="flex justify-between gap-4"><dt className="text-muted">Barbearia</dt><dd>{shop.name}</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-muted">Serviço</dt><dd>{svc.name} ({svc.duration_minutes} min)</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-muted">Profissional</dt><dd>{pro.display_name}</dd></div>
@@ -38,6 +38,6 @@ export default async function ConfirmPage({ params, searchParams }: { params: Pr
         <div className="flex justify-between gap-4"><dt className="text-muted">Valor</dt><dd className="font-semibold">{brl(svc.price_cents)}</dd></div>
       </dl>
       <ConfirmForm slug={slug} shop={shop.id} service={q.data.service} pro={q.data.pro} at={q.data.at} />
-    </main>
+    </main></div>
   );
 }

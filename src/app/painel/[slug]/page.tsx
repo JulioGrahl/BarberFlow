@@ -48,6 +48,8 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
   const closed = cur.filter((a) => ["completed", "no_show", "cancelled"].includes(a.status));
   const lost = closed.filter((a) => a.status !== "completed").length;
   const lostPct = closed.length ? (lost / closed.length) * 100 : 0;
+  const noShows = cur.filter((a) => a.status === "no_show");
+  const lostCents = noShows.reduce((a, x) => a + x.price_cents, 0);
 
   const todayList = appts.filter((a) => a.ymd === today && a.status !== "cancelled");
   const tNow = nowMs();
@@ -70,13 +72,14 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
       <PageHead title={`${greeting()}.`} sub={`${longDate(today)} · ${todayList.length === 0 ? "nenhum horário marcado hoje" : `${todayList.length} ${todayList.length === 1 ? "horário" : "horários"} hoje`}`}
         actions={<Link href={`/painel/${slug}/agenda`} className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm hover:bg-surface"><CalendarDays size={16} aria-hidden /> Abrir agenda</Link>} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label={owner ? "Receita em 30 dias" : "Faturado em 30 dias"} value={brl(rev30)} hero>
           <Sparkline values={daily} />
           <div className="mt-2"><Delta pct={pctChange(rev30, revPrev)} /></div>
         </Stat>
         <Stat label="Atendimentos concluídos" value={String(done30.length)}><Delta pct={pctChange(done30.length, donePrev.length)} /></Stat>
         <Stat label="Ticket médio" value={brl(ticket)}><span className="text-xs text-muted">por atendimento concluído</span></Stat>
+        <Stat label="Perdido com faltas" value={brl(lostCents)}><span className="text-xs text-muted">{noShows.length} {noShows.length === 1 ? "falta" : "faltas"} · {lostPct.toFixed(0)}% dos encerrados</span></Stat>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-5">
@@ -118,7 +121,6 @@ export default async function ShopPanel({ params }: { params: Promise<{ slug: st
           ) : null}
         </div>
       </div>
-      <p className="mt-4 text-xs text-muted">Faltas e cancelamentos: {lostPct.toFixed(0)}% dos atendimentos encerrados nos últimos 30 dias.</p>
     </>
   );
 }
