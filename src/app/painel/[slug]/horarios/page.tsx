@@ -20,7 +20,7 @@ export default async function HoursPage({ params, searchParams }: { params: Prom
   const q = supabase.from("schedules").select("weekday, start_time, end_time, break_start, break_end").eq("barbershop_id", barbershop.id);
   const { data: rows } = await (current ? q.eq("professional_id", current.id) : q.is("professional_id", null));
   const byDay = new Map((rows ?? []).map((r) => [r.weekday, r]));
-  const time = "w-[5.5rem] rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-base";
+  const time = "w-[7rem] rounded-lg border border-line bg-surface-2 px-2 py-1.5 text-base";
 
   return (
     <>

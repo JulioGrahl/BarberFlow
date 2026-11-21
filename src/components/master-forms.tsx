@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Check, Copy } from "lucide-react";
 import type { MasterState } from "@/app/actions/master";
 import { FormMessage, SubmitButton } from "@/components/ui";
@@ -65,7 +66,7 @@ export function ActionForm({
     <form action={run} className={className}>
       {children}
       <FormMessage error={state?.error} message={state?.inviteUrl ? state.message : undefined} />
-      {toast ? <div role="status" className="toast-in fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-success/40 bg-surface-2 px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div> : null}
+      {toast && typeof document !== "undefined" ? createPortal(<div role="status" className="toast-in fixed bottom-20 left-1/2 z-[100] -translate-x-1/2 rounded-lg border border-success/40 bg-surface-2 px-4 py-2.5 text-sm text-success shadow-xl md:bottom-6">{toast}</div>, document.body) : null}
       {state?.inviteUrl ? <CopyLink url={state.inviteUrl} /> : null}
       <SubmitButton pendingText={pending}>{submit}</SubmitButton>
     </form>
