@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, LayoutDashboard, LogOut, Scissors, Users } from "lucide-react";
+import { CalendarDays, Clock, LayoutDashboard, LogOut, Scissors, Users } from "lucide-react";
 
 export function ShopNav({ slug, owner }: { slug: string; owner: boolean }) {
   const path = usePathname();
   const base = `/painel/${slug}`;
   const items = [
     { href: base, label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { href: `${base}/agenda`, label: "Agenda", icon: CalendarDays },
     ...(owner
       ? [
           { href: `${base}/servicos`, label: "Serviços", icon: Scissors },

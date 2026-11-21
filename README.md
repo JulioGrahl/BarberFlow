@@ -20,7 +20,8 @@ Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Lucide, Supabase (Po
 | 6–7. Painel Master | código pronto (dashboard, barbearias, Nova Barbearia com link de convite, planos, mensalidades manuais, suporte auditado); build/lint OK e RPCs testadas no banco; **telas ainda não conferidas no navegador** |
 | 8–10. Painel do proprietário (parcial) | convite do proprietário testado de ponta a ponta; serviços, profissionais (comissão, serviços que realiza) e convite de barbeiro prontos — build/lint OK e operações testadas no banco; **telas ainda não conferidas no navegador** |
 | 11–12. Horários e reserva pública | horários da barbearia/profissionais, fluxo `/b/[slug]/agendar` (serviço → profissional → data → horário → login/cadastro → confirmação) e lista/cancelamento na área do cliente; build/lint OK, regras testadas no banco (conflito, intervalo, cancelamento); **telas ainda não conferidas no navegador** |
-| 13 em diante | pendentes: agenda do dono/barbeiro, WhatsApp, financeiro, relatórios, testes de segurança, publicação (seção 15 da especificação) |
+| 13. Agenda | `/painel/[slug]/agenda`: dia a dia, filtro por profissional, concluir/não compareceu/cancelar; barbeiro só vê e conclui os próprios; concluir gera a receita; build/lint OK e regras testadas no banco |
+| 14 em diante | pendentes: WhatsApp, financeiro, relatórios, testes de segurança, publicação (seção 15 da especificação) |
 
 ## Rodando localmente
 Requisitos: Node 20+ e npm.

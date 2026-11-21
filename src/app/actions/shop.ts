@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import * as z from "zod";
 import { requireShopAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -124,4 +125,18 @@ export async function saveHours(_p: State, fd: FormData): Promise<State> {
   }
   revalidatePath(`/painel/${shop.slug}`, "layout");
   return { message: "Horários salvos." };
+}
+
+// Agenda: dono conclui/marca falta/cancela; barbeiro só conclui ou marca falta dos próprios (trigger + RLS garantem).
+export async function setAppointmentStatus(fd: FormData): Promise<void> {
+  const slug = s(fd, "slug");
+  const access = await requireShopAccess(slug);
+  const id = z.uuid().safeParse(s(fd, "id"));
+  const status = z.enum(["completed", "no_show", "cancelled"]).safeParse(s(fd, "status"));
+  const back = `/painel/${access.barbershop.slug}/agenda?dia=${/^\d{4}-\d{2}-\d{2}$/.test(s(fd, "dia")) ? s(fd, "dia") : ""}`;
+  if (!id.success || !status.success || (status.data === "cancelled" && access.role !== "owner")) redirect(`${back}&erro=1`);
+  const supabase = await createClient();
+  const { error } = await supabase.from("appointments").update({ status: status.data }).eq("id", id.data).eq("barbershop_id", access.barbershop.id).eq("status", "scheduled");
+  revalidatePath(`/painel/${slug}`, "layout");
+  redirect(error ? `${back}&erro=1` : back);
 }
