@@ -397,7 +397,7 @@ export async function savePageSettings(_p: State, fd: FormData): Promise<State> 
   const shop = await owner(fd);
   const mode = s(fd, "team_mode");
   if (!["cards", "compact", "hidden"].includes(mode)) return fail();
-  const row: Record<string, string | boolean | null> = { team_mode: mode, show_gallery: fd.get("show_gallery") === "on", updated_at: new Date().toISOString() };
+  const row: Record<string, string | boolean | null> = { team_mode: mode, show_gallery: fd.get("show_gallery") === "on" };
   for (const f of SOCIAL_FIELDS) {
     const v = normalizeSocial(f.key, s(fd, f.key));
     if (v === null) return { error: `Link de ${f.label} inválido. Use o @ do perfil ou o endereço completo.` };
@@ -405,7 +405,7 @@ export async function savePageSettings(_p: State, fd: FormData): Promise<State> 
   }
   const supabase = await createClient();
   const { error } = await supabase.from("shop_page_settings").upsert({ barbershop_id: shop.id, ...row });
-  if (error) return fail();
+  if (error) { console.error("savePageSettings:", error.code, error.message); return fail(); }
   revalidatePath(`/painel/${shop.slug}`, "layout");
   revalidatePath(`/b/${shop.slug}`);
   return { message: "Página atualizada." };
