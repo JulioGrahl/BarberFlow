@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CalendarDays, Clock, Wallet, MessageCircle, LogOut, Scissors, Users, ExternalLink, Sun, ChartNoAxesCombined, ContactRound, Store, Menu, X } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 
 export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owner: boolean; name: string; pending?: number }) {
   const path = usePathname();
@@ -36,7 +37,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
       {/* Desktop: placa escura com o poste na borda */}
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col bg-night px-3 py-5 text-night-ink md:flex">
         <div className="mb-8 flex items-center gap-3 px-3">
-          <span className="pole h-9 w-1.5 shrink-0 rounded-full" aria-hidden />
+          <LogoMark className="h-9" />
           <div className="min-w-0">
             <p className="font-display truncate text-xl leading-tight">{name}</p>
             <p className="mt-0.5 text-xs text-night-muted">{owner ? "Proprietário" : "Barbeiro"}</p>
@@ -62,6 +63,7 @@ export function ShopNav({ slug, owner, name, pending = 0 }: { slug: string; owne
               <LogOut size={18} aria-hidden /> Sair
             </button>
           </form>
+          <p className="flex items-center gap-2 px-3 pt-3 text-xs text-night-muted"><LogoMark className="h-5" />BarberFlow</p>
         </div>
       </aside>
 

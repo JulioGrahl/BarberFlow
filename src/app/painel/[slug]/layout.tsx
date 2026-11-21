@@ -4,6 +4,7 @@ import { dateTimeBR, nowISO } from "@/lib/format";
 import { closeSupport } from "@/app/actions/master";
 import { ShopNav } from "@/components/shop-nav";
 import { ShieldAlert } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default async function ShopLayout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -17,6 +18,7 @@ export default async function ShopLayout({ children, params }: { children: React
       <main className="hex-dark relative flex min-h-dvh flex-1 items-center justify-center bg-night px-5 py-10 text-night-ink">
         <span className="pole absolute inset-x-0 top-0 h-2" aria-hidden />
         <div className="w-full max-w-md">
+          <div className="mb-8"><Logo tone="dark" size="md" /></div>
           <ShieldAlert size={40} className="text-flare" aria-hidden />
           <h1 className="font-display mt-4 text-5xl leading-[0.95]">{blockInfo.status === "cancelled" ? "Contrato encerrado" : "Acesso suspenso"}</h1>
           <p className="mt-4 text-night-muted">O acesso da <strong className="text-night-ink">{access.barbershop.name}</strong> ao BarberFlow está {blockInfo.status === "cancelled" ? "encerrado" : "suspenso"}. {blockInfo.note ? `Motivo: ${blockInfo.note}. ` : ""}A página de agendamento dos seus clientes também está fora do ar.</p>

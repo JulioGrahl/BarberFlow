@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 // Faixa de abertura das telas do cliente: placa escura com azulejo e o poste na base.
 export function PublicTop({ title, kicker, back, actions, wide = false }: {
@@ -13,7 +14,7 @@ export function PublicTop({ title, kicker, back, actions, wide = false }: {
         <div className="flex items-center justify-between gap-3">
           {back ? (
             <Link href={back.href} className="inline-flex min-h-10 items-center gap-1.5 text-sm text-night-muted hover:text-white"><ArrowLeft size={16} aria-hidden />{back.label}</Link>
-          ) : <span className="font-display text-xl">BarberFlow</span>}
+          ) : <Logo tone="dark" size="sm" />}
           {actions}
         </div>
         {kicker ? <p className="mt-7 text-sm text-night-muted">{kicker}</p> : null}

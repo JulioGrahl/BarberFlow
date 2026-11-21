@@ -154,3 +154,8 @@ dialog.drawer::backdrop { background: rgb(14 27 37 / .55); backdrop-filter: blur
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Logo: listras do poste em movimento (opcional) */
+.bf-bands { animation: bf-bands 1.6s linear infinite; }
+@keyframes bf-bands { to { transform: translateY(32px); } }
+@media (prefers-reduced-motion: reduce) { .bf-bands { animation: none; } }

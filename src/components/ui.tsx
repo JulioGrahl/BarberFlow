@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { Logo } from "@/components/logo";
 
 // Moldura das telas de entrada: placa escura com azulejo à esquerda (desktop) e o formulário à direita.
 export function AuthCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
@@ -9,13 +10,13 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
     <main className="grid flex-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <aside className="hex-dark relative hidden overflow-hidden bg-night p-12 text-night-ink lg:flex lg:flex-col lg:justify-between">
         <span className="pole absolute inset-y-0 left-0 w-3" aria-hidden />
-        <div className="flex items-center gap-3 pl-4"><span className="pole pole-animate h-8 w-2.5 rounded-full" aria-hidden /><span className="font-display text-2xl">BarberFlow</span></div>
+        <div className="pl-4"><Logo tone="dark" size="lg" animate /></div>
         <p className="font-display pl-4 text-6xl leading-[0.95]">A cadeira cheia e o caixa em dia.</p>
         <p className="max-w-sm pl-4 text-sm text-night-muted">Agenda, equipe e financeiro da barbearia em um só lugar.</p>
       </aside>
       <div className="flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-2.5 lg:hidden"><span className="pole pole-animate h-7 w-2.5 rounded-full" aria-hidden /><span className="font-display text-2xl">BarberFlow</span></div>
+          <div className="mb-8 lg:hidden"><Logo tone="light" size="md" /></div>
           <h1 className="font-display text-5xl leading-none">{title}</h1>
           {subtitle ? <p className="mt-3 text-sm text-muted">{subtitle}</p> : null}
           <div className="mt-7 rounded-2xl border border-line bg-surface p-5 sm:p-6">{children}</div>

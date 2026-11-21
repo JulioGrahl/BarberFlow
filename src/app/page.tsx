@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, Check, Clock, ImageIcon, LineChart, MessageCircle, Smartphone, UserX, Store, Users } from "lucide-react";
 import { getUser, resolveHome } from "@/lib/auth";
+import { Logo } from "@/components/logo";
 
 const points = [
   { icon: CalendarCheck, title: "Agenda sem conflito", text: "O cliente escolhe serviço, profissional e horário livre. Dois clientes nunca pegam o mesmo horário." },
@@ -30,7 +31,7 @@ export default async function Home() {
     <div className="flex-1">
       <section className="relative overflow-hidden bg-night text-night-ink">
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
-          <span className="flex items-center gap-2.5 font-display text-2xl"><span className="pole h-6 w-1.5 rounded-full" aria-hidden />BarberFlow</span>
+          <Logo tone="dark" size="md" />
           {home ? <Link href={home} className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-night hover:bg-night-ink">Abrir meu painel</Link>
             : (
               <nav className="flex items-center gap-2" aria-label="Conta">
@@ -157,7 +158,7 @@ export default async function Home() {
             <h2 className="font-display max-w-2xl text-5xl leading-[0.95] sm:text-6xl">É dono de barbearia? Libere o seu painel.</h2>
             <p className="mt-5 max-w-xl text-night-muted">A implantação é feita pela nossa equipe. Fale com a gente e a sua barbearia entra no ar com serviços, horários e equipe já configurados.</p>
           </div>
-          <p className="mt-10 text-center text-sm text-muted">BarberFlow · agendamento e gestão para barbearias</p>
+          <div className="mt-10 flex flex-col items-center gap-2 text-sm text-muted"><Logo tone="light" size="sm" /><p>Agendamento e gestão para barbearias</p></div>
         </section>
       </main>
     </div>

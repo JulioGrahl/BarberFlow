@@ -11,6 +11,7 @@ import { getUser, resolveHome } from "@/lib/auth";
 import { GalleryCarousel } from "@/components/gallery-carousel";
 import { SocialIcon, SOCIAL_LABEL } from "@/components/social-icons";
 import type { SocialKey } from "@/lib/social";
+import { Logo, LogoMark } from "@/components/logo";
 
 type Hour = { weekday: number; start_time: string; end_time: string; break_start: string | null; break_end: string | null };
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -71,7 +72,7 @@ export default async function ShopPage({ params }: Props) {
       {/* ---------- abertura */}
       <section className="relative overflow-hidden bg-night text-night-ink">
         <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
-          <span className="flex items-center gap-2.5 font-display text-lg text-night-muted"><span className="pole h-5 w-1.5 rounded-full" aria-hidden />Barbearia</span>
+          <span className="flex min-w-0 items-center gap-2.5 font-display text-lg text-night-ink"><LogoMark className="h-7" /><span className="truncate">{shop.name}</span></span>
           {home ? (
             <Link href={home} className="inline-flex min-h-11 items-center rounded-lg bg-white px-4 text-sm font-semibold text-night hover:bg-night-ink">Minha conta</Link>
           ) : (
@@ -226,7 +227,7 @@ export default async function ShopPage({ params }: Props) {
       </main>
 
       <footer className="border-t border-line px-5 py-8 text-center text-sm text-muted">
-        <p>{shop.name} · agendamento por <span className="font-semibold text-ink">BarberFlow</span></p>
+        <div className="flex flex-col items-center gap-2"><p>{shop.name}</p><p className="flex items-center gap-2">Agendamento por <Logo tone="light" size="sm" /></p></div>
       </footer>
 
       {/* barra de ação fixa no celular */}
